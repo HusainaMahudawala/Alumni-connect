@@ -28,16 +28,39 @@ exports.applyOpportunity = async (req, res) => {
 };
 exports.viewApplicants = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
     const opportunity = await Opportunity.findById(req.params.id)
-      .populate("applicants", "name email role");
+      .populate({
+        path: "applicants.student",
+        select: "name email"
+      });
 
     if (!opportunity) {
       return res.status(404).json({ message: "Opportunity not found" });
     }
 
-    res.status(200).json(opportunity.applicants);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    if (opportunity.postedBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const total = opportunity.applicants.length;
+
+    const applicants = opportunity.applicants
+      .sort((a, b) => b.appliedAt - a.appliedAt)
+      .slice(skip, skip + limit);
+
+    res.json({
+      totalApplicants: total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      applicants
+    });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
   }
 };
+
 

@@ -7,7 +7,9 @@ const Mentorship = require("../models/Mentorship");
 const {
   applyMentorship,
   viewRequests,
-  updateStatus
+  updateStatus,
+  myMentorships,
+  approvedMentorships
 } = require("../controllers/mentorshipController");
 // Student sends mentorship request
 router.post(
@@ -41,6 +43,21 @@ router.post("/apply/:alumniId", auth, role("student"), applyMentorship);
 // Alumni
 router.get("/requests", auth, role("alumni"), viewRequests);
 router.put("/update/:id", auth, role("alumni"), updateStatus);
+// Student
+router.get(
+  "/my",
+  auth,
+  role("student"),
+  myMentorships
+);
+
+// Alumni
+router.get(
+  "/approved",
+  auth,
+  role("alumni"),
+  approvedMentorships
+);
 
 
 
