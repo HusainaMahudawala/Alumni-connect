@@ -7,65 +7,75 @@ function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("student");
-
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/register", {
+      await axios.post("http://localhost:5000/api/auth/register", {
         name,
         email,
         password,
-        role,
+        role: "student",
       });
 
       alert("Registration Successful ✅");
-      navigate("/"); // redirect to login
-
+      navigate("/");
     } catch (error) {
       alert(error.response?.data?.message || "Registration Failed ❌");
     }
   };
 
   return (
-    <div className="register-container">
-      <form className="register-form" onSubmit={handleRegister}>
-        <h2>Register</h2>
+    <div className="register-page">
+      <div className="register-card">
 
-        <input
-          type="text"
-          placeholder="Enter Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
+        {/* Left Panel */}
+        <div className="left-section">
+          <h1>Welcome Back!</h1>
+          <p>
+            To keep connected with us please login with your personal info
+          </p>
+          <button onClick={() => navigate("/")}>SIGN IN</button>
+        </div>
 
-        <input
-          type="email"
-          placeholder="Enter Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        {/* Right Panel */}
+        <div className="right-section">
+          <h2>Create Account</h2>
 
-        <input
-          type="password"
-          placeholder="Enter Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+          <form onSubmit={handleRegister}>
+            <input
+              type="text"
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
 
-        <select value={role} onChange={(e) => setRole(e.target.value)}>
-          <option value="student">Student</option>
-          <option value="alumni">Alumni</option>
-        </select>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
 
-        <button type="submit">Register</button>
-      </form>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+
+            <button type="submit" className="signup-btn">
+              SIGN UP
+            </button>
+          </form>
+        </div>
+
+      </div>
     </div>
   );
 }

@@ -1,45 +1,117 @@
-.register-container {
+/* Full White Background */
+.register-page {
   height: 100vh;
+  background: #ffffff;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #eef2f7;
+  font-family: "Segoe UI", sans-serif;
 }
 
-.register-form {
+/* 3D Card */
+.register-card {
+  width: 900px;
+  height: 550px;
+  display: flex;
+  border-radius: 20px;
+  overflow: hidden;
   background: white;
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.15),
+    0 15px 20px rgba(0, 0, 0, 0.08);
+  transition: 0.3s ease;
+}
+
+.register-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Left Green Section */
+.left-section {
+  flex: 1;
+  background: linear-gradient(135deg, #2bb673, #1e9e63);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   padding: 40px;
-  border-radius: 10px;
-  width: 350px;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
-.register-form h2 {
+.left-section h1 {
+  font-size: 34px;
   margin-bottom: 20px;
 }
 
-.register-form input,
-.register-form select {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+.left-section p {
+  max-width: 280px;
+  margin-bottom: 30px;
+  opacity: 0.9;
 }
 
-.register-form button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 15px;
-  border: none;
-  background-color: #28a745;
+.left-section button {
+  padding: 10px 30px;
+  border-radius: 30px;
+  border: 2px solid white;
+  background: transparent;
   color: white;
-  font-size: 16px;
-  border-radius: 5px;
   cursor: pointer;
+  transition: 0.3s;
 }
 
-.register-form button:hover {
-  background-color: #1e7e34;
+.left-section button:hover {
+  background: white;
+  color: #1e9e63;
+}
+
+/* Right Section */
+.right-section {
+  flex: 1;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+.right-section h2 {
+  color: #1e9e63;
+  margin-bottom: 30px;
+  font-size: 28px;
+}
+
+/* Form Inputs */
+.right-section input {
+  width: 320px;
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  outline: none;
+  transition: 0.3s;
+}
+
+.right-section input:focus {
+  border-color: #2bb673;
+  box-shadow: 0 0 8px rgba(43, 182, 115, 0.4);
+}
+
+/* Sign Up Button */
+.signup-btn {
+  width: 320px;
+  padding: 12px;
+  border-radius: 30px;
+  border: none;
+  background: linear-gradient(135deg, #2bb673, #1e9e63);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.signup-btn:hover {
+  transform: scale(1.05);
+  opacity: 0.95;
 }

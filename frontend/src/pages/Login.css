@@ -1,44 +1,136 @@
-.login-container {
+.auth-page {
   height: 100vh;
+  background: #ffffff;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f4f6f8;
+  font-family: "Segoe UI", sans-serif;
+  padding: 20px;
 }
 
-.login-form {
+/* 3D Card */
+.auth-card {
+  width: 900px;
+  height: 550px;
+  display: flex;
+  border-radius: 20px;
+  overflow: hidden;
   background: white;
+  box-shadow:
+    0 25px 50px rgba(0, 0, 0, 0.15),
+    0 15px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Slide Animation */
+.slide-in {
+  animation: slideFade 0.6s ease;
+}
+
+@keyframes slideFade {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Left Panel */
+.left-panel {
+  flex: 1;
+  background: linear-gradient(135deg, #2bb673, #1e9e63);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   padding: 40px;
-  border-radius: 10px;
-  width: 350px;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
-.login-form h2 {
+.left-panel h1 {
+  font-size: 32px;
   margin-bottom: 20px;
 }
 
-.login-form input {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+.left-panel p {
+  max-width: 280px;
+  margin-bottom: 30px;
 }
 
-.login-form button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 15px;
-  border: none;
-  background-color: #007bff;
+.left-panel button {
+  padding: 10px 30px;
+  border-radius: 30px;
+  border: 2px solid white;
+  background: transparent;
   color: white;
-  font-size: 16px;
-  border-radius: 5px;
   cursor: pointer;
+  transition: 0.3s;
 }
 
-.login-form button:hover {
-  background-color: #0056b3;
+.left-panel button:hover {
+  background: white;
+  color: #1e9e63;
+}
+
+/* Right Panel */
+.right-panel {
+  flex: 1;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+.right-panel h2 {
+  color: #1e9e63;
+  margin-bottom: 25px;
+}
+
+.right-panel input {
+  width: 320px;
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  transition: 0.3s;
+}
+
+.right-panel input:focus {
+  border-color: #2bb673;
+  box-shadow: 0 0 8px rgba(43, 182, 115, 0.4);
+}
+
+.submit-btn {
+  width: 320px;
+  padding: 12px;
+  border-radius: 30px;
+  border: none;
+  background: linear-gradient(135deg, #2bb673, #1e9e63);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.submit-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .auth-card {
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+  }
+
+  .right-panel input,
+  .submit-btn {
+    width: 100%;
+  }
 }
