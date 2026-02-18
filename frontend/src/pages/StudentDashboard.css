@@ -1,0 +1,72 @@
+.dashboard {
+  min-height: 100vh;
+  background: #f5f7f6;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* NAVBAR */
+.dashboard-navbar {
+  background: linear-gradient(135deg, #2bb673, #1fa463);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 40px;
+  box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+}
+
+.logout-btn {
+  background: white;
+  color: #1fa463;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.logout-btn:hover {
+  background: #f0f0f0;
+}
+
+/* CONTENT */
+.dashboard-content {
+  padding: 40px;
+}
+
+/* WELCOME CARD */
+.welcome-card {
+  background: white;
+  padding: 30px;
+  border-radius: 14px;
+  box-shadow: 0px 6px 18px rgba(0,0,0,0.08);
+  margin-bottom: 30px;
+}
+
+.welcome-card h1 {
+  color: #1fa463;
+}
+
+/* GRID */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+/* CARD */
+.dashboard-card {
+  background: white;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0px 6px 18px rgba(0,0,0,0.08);
+  transition: 0.3s;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px);
+}
+
+.dashboard-card h3 {
+  color: #2bb673;
+}
