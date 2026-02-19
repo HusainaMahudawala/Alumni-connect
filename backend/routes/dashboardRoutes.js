@@ -5,10 +5,10 @@ const { studentDashboard, alumniDashboard } = require("../controllers/dashboardC
 const auth = require("../middleware/authMiddleware");
 const role = require("../middleware/roleMiddleware");
 
-// Student dashboard
+// Student
 router.get("/student", auth, role("student"), studentDashboard);
 
-// Alumni dashboard
+// Alumni
 router.get("/alumni", auth, role("alumni"), alumniDashboard);
 
 module.exports = router;

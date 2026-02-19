@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import StudentDashboard from "./pages/StudentDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import StudentOpportunities from "./pages/StudentOpportunities";
 function App() {
   return (
     <Router>
@@ -12,6 +13,14 @@ function App() {
   element={
     <ProtectedRoute>
       <StudentDashboard />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/opportunities"
+  element={
+    <ProtectedRoute>
+      <StudentOpportunities />
     </ProtectedRoute>
   }
 />

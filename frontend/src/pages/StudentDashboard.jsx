@@ -6,7 +6,6 @@ import "./StudentDashboard.css";
 function StudentDashboard() {
   const navigate = useNavigate();
   const [studentData, setStudentData] = useState(null);
-
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/");
@@ -73,6 +72,11 @@ function StudentDashboard() {
     </p>
   </div>
 </div>
+<div className="dashboard-card" onClick={() => navigate("/opportunities")}>
+  <h3>Opportunities</h3>
+  <p>Click to view and apply</p>
+</div>
+
 
       </div>
     </div>
