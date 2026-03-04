@@ -4,6 +4,7 @@ const router = express.Router();
 const auth = require("../middleware/authMiddleware");
 const role = require("../middleware/roleMiddleware");
 const Mentorship = require("../models/Mentorship");
+const User = require("../models/User");
 const {
   applyMentorship,
   viewRequests,
@@ -19,6 +20,17 @@ router.post(
   async (req, res) => {
     try {
       const { alumniId, purpose } = req.body;
+
+      const alumni = await User.findById(alumniId).select("role mentorshipSlots");
+      if (!alumni || alumni.role !== "alumni") {
+        return res.status(404).json({ message: "Alumni not found" });
+      }
+
+      if ((alumni.mentorshipSlots || 0) <= 0) {
+        return res.status(400).json({
+          message: "You cannot request mentorship. Slot is not available."
+        });
+      }
 
       const request = new Mentorship({
         student: req.user.id,

@@ -1,0 +1,243 @@
+/* Navbar Styles */
+
+.navbar {
+  background-color: white;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 70px;
+}
+
+/* Logo */
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: #667eea;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.navbar-logo:hover {
+  transform: scale(1.05);
+}
+
+.logo-icon {
+  font-size: 1.8rem;
+}
+
+.logo-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+/* Navigation Menu */
+.navbar-menu {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  flex: 1;
+  margin-left: 60px;
+}
+
+.nav-link {
+  color: #1a1a1a;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+}
+
+.nav-link:hover {
+  color: #667eea;
+}
+
+/* Auth Buttons */
+.navbar-auth {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.btn-signin {
+  background-color: transparent;
+  color: #667eea;
+  border: 2px solid #667eea;
+  padding: 9px 22px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.btn-signin:hover {
+  background-color: #667eea;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-signup {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 9px 22px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.btn-signup:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-logout {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 9px 22px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.btn-logout:hover {
+  background-color: #d32f2f;
+  transform: translateY(-2px);
+}
+
+.user-menu {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+/* Hamburger Menu */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  cursor: pointer;
+  gap: 5px;
+}
+
+.hamburger span {
+  width: 25px;
+  height: 3px;
+  background-color: #1a1a1a;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .navbar-container {
+    height: 60px;
+    padding: 0 15px;
+  }
+
+  .navbar-menu {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background-color: white;
+    flex-direction: column;
+    gap: 0;
+    margin-left: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .navbar-menu.active {
+    max-height: 300px;
+  }
+
+  .nav-link {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    width: 100%;
+    text-align: left;
+  }
+
+  .navbar-auth {
+    position: absolute;
+    top: 60px;
+    right: 0;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    background-color: white;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .navbar-menu.active + .navbar-auth,
+  .hamburger.active ~ .navbar-auth {
+    max-height: 200px;
+  }
+
+  .btn-signin,
+  .btn-signup,
+  .btn-logout {
+    width: 100%;
+    margin: 10px;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  .logo-text {
+    display: none;
+  }
+
+  .navbar-logo {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-container {
+    height: 50px;
+    padding: 0 10px;
+  }
+
+  .logo-icon {
+    font-size: 1.5rem;
+  }
+
+  .hamburger span {
+    width: 20px;
+    height: 2.5px;
+  }
+}

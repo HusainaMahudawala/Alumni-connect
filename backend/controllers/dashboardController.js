@@ -3,27 +3,38 @@ const Mentorship = require("../models/Mentorship");
 const User = require("../models/User");
 
 // Student Dashboard
+
+
 exports.studentDashboard = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-
+    // ✅ FIXED COUNT
+   const user = await User.findById(req.user.id);
     const appliedOpportunities = await Opportunity.countDocuments({
-      "applicants.student": req.user.id
+      applicants: req.user.id
     });
 
-    const mentorships = await Mentorship.find({ student: req.user.id });
+    const mentorships = await Mentorship.find({
+      student: req.user.id
+    });
 
-    const pending = mentorships.filter(m => m.status === "pending").length;
-    const approved = mentorships.filter(m => m.status === "approved").length;
+    const pending = mentorships.filter(
+      (m) => m.status === "pending"
+    ).length;
+
+    const approved = mentorships.filter(
+      (m) => m.status === "approved"
+    ).length;
 
     res.json({
-      name: user.name,  // ✅ now real name from DB
+      name: user.name,      // optional if you want
+      email: user.email,    // optional
       appliedOpportunities,
       pendingMentorships: pending,
       approvedMentorships: approved
     });
 
   } catch (e) {
+    console.log(e);
     res.status(500).json({ message: e.message });
   }
 };

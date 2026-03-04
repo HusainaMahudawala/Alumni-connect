@@ -1,82 +1,105 @@
 const Mentorship = require("../models/Mentorship");
+const User = require("../models/User");
 
+// Student sends mentorship request
 exports.applyMentorship = async (req, res) => {
   try {
-    const { purpose } = req.body;
     const alumniId = req.params.alumniId;
+    const { purpose } = req.body;   // ✅ ADD THIS
+
+    if (!purpose)
+      return res.status(400).json({ message: "Purpose is required" });
 
     const existing = await Mentorship.findOne({
       student: req.user.id,
       alumni: alumniId
     });
 
-    // 🚫 Already applied (any status)
-    if (existing) {
+    if (existing)
+      return res.status(400).json({ message: "Already requested" });
+
+    const alumni = await User.findById(alumniId).select("role mentorshipSlots");
+
+    if (!alumni || alumni.role !== "alumni") {
+      return res.status(404).json({ message: "Alumni not found" });
+    }
+
+    if ((alumni.mentorshipSlots || 0) <= 0) {
       return res.status(400).json({
-        message: `You have already applied. Current status: ${existing.status}`
+        message: "You cannot request mentorship. Slot is not available."
       });
     }
 
-    const request = await Mentorship.create({
+    const mentorship = new Mentorship({
       student: req.user.id,
       alumni: alumniId,
-      purpose
+      purpose,            // ✅ ADD THIS
+      status: "pending"
     });
 
-    res.status(201).json(request);
+    await mentorship.save();
+
+    res.status(201).json({ message: "Mentorship request sent" });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
- exports.myMentorships = async (req, res) => {
-  try {
-    const requests = await Mentorship.find({
-      student: req.user.id
-    })
-      .populate("alumni", "name email")
-      .sort({ createdAt: -1 });
-
-    res.status(200).json(requests);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
+// Alumni views all requests
 exports.viewRequests = async (req, res) => {
   try {
-    const requests = await Mentorship.find({ alumni: req.user.id })
-      .populate("student", "name email");
+    const requests = await Mentorship.find({
+      alumni: req.user.id
+    }).populate("student", "name email");
 
-    res.status(200).json(requests);
+    res.json(requests);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Alumni updates status (approve / reject)
 exports.updateStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status } = req.body; // approved or rejected
 
-    const request = await Mentorship.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+    const mentorship = await Mentorship.findById(req.params.id);
 
-    res.status(200).json(request);
+    if (!mentorship)
+      return res.status(404).json({ message: "Request not found" });
+
+    mentorship.status = status;
+    await mentorship.save();
+
+    res.json({ message: "Status updated" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Student sees own mentorships
+exports.myMentorships = async (req, res) => {
+  try {
+    const my = await Mentorship.find({
+      student: req.user.id
+    }).populate("alumni", "name email");
+
+    res.json(my);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Alumni sees approved mentorships
 exports.approvedMentorships = async (req, res) => {
   try {
     const approved = await Mentorship.find({
       alumni: req.user.id,
       status: "approved"
-    })
-      .populate("student", "name email");
+    }).populate("student", "name email");
 
-    res.status(200).json(approved);
+    res.json(approved);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

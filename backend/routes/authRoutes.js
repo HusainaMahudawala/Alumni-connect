@@ -4,5 +4,15 @@ const { register, login } = require("../controllers/authController");
 
 router.post("/register", register);
 router.post("/login", login);
+const User = require("../models/User");
 
+// Get all alumni users
+router.get("/alumni", async (req, res) => {
+  try {
+    const alumni = await User.find({ role: "alumni" }).select("-password");
+    res.json(alumni);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 module.exports = router;

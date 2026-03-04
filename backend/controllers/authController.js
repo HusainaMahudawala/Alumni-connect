@@ -5,7 +5,20 @@ const jwt = require("jsonwebtoken");
 // REGISTER
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, phone, password, role, skills, interests, company, experience, mentorshipSlots } = req.body;
+
+    // Validation
+    if (!name || !email || !phone || !password || !role) {
+      return res.status(400).json({ message: "All basic fields are required" });
+    }
+
+    if (role === "student" && (!skills || !interests)) {
+      return res.status(400).json({ message: "Skills and interests are required for students" });
+    }
+
+    if (role === "alumni" && !company) {
+      return res.status(400).json({ message: "Company name is required for alumni" });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -14,18 +27,49 @@ exports.register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = new User({
+    const userData = {
       name,
       email,
+      phone,
       password: hashedPassword,
       role
-    });
+    };
 
+    // Add role-specific fields
+    if (role === "student") {
+      userData.skills = Array.isArray(skills) ? skills : [skills];
+      userData.interests = Array.isArray(interests) ? interests : [interests];
+    } else if (role === "alumni") {
+      userData.company = company;
+      userData.experience = parseInt(experience) || 0;
+      userData.mentorshipSlots = parseInt(mentorshipSlots) || 0;
+    }
+
+    const user = new User(userData);
     await user.save();
 
-    res.status(201).json({ message: "User registered successfully" });
+    // Create token for auto-login
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.status(201).json({
+      message: "User registered successfully",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        ...(role === "student" && { skills: user.skills, interests: user.interests }),
+        ...(role === "alumni" && { company: user.company, experience: user.experience, mentorshipSlots: user.mentorshipSlots })
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Registration error:", error);
+    res.status(500).json({ message: error.message || "Registration failed" });
   }
 };
 

@@ -26,45 +26,85 @@ function Login() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card slide-in">
-
-        {/* Left Panel */}
-        <div className="left-panel">
-          <h1>Hello Mate!</h1>
-          <p>
-           Enter your personal details and start journey with us
-          </p>
-          <button onClick={() => navigate("/register")}>
-            SIGN UP
-          </button>
+    <div className="login-page">
+      <div className="login-container">
+        {/* Left Panel - Illustration */}
+        <div className="login-left">
+          <div className="illustration">
+            <div className="illustration-circle circle-1"></div>
+            <div className="illustration-circle circle-2"></div>
+            <div className="illustration-circle circle-3"></div>
+            <div className="illustration-content">
+              <div className="user-illustration">👋</div>
+              <p className="illustration-text">Welcome Back!</p>
+            </div>
+          </div>
         </div>
 
-        {/* Right Panel */}
-        <div className="right-panel">
-          <h2>Sign In</h2>
+        {/* Right Panel - Form */}
+        <div className="login-right">
+          <div className="form-header">
+            <h1>Sign In to Your Account</h1>
+            <p>Enter your credentials to continue</p>
+          </div>
 
-          <form onSubmit={handleLogin}>
-            <input
-              type="email"
-              placeholder="Email"
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+          <form onSubmit={handleLogin} className="login-form">
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-            <input
-              type="password"
-              placeholder="Password"
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
 
-            <button type="submit" className="submit-btn">
-              SIGN IN
+            <button type="submit" className="signin-btn">
+              Sign In
             </button>
+
+            {/* Social Login */}
+            <div className="social-login">
+              <p>Or, continue with</p>
+              <div className="social-buttons">
+                <button type="button" className="social-btn google-btn">
+                  Google
+                </button>
+                <button type="button" className="social-btn facebook-btn">
+                  Facebook
+                </button>
+              </div>
+            </div>
+
+            {/* Register Link */}
+            <div className="register-link">
+              <p>
+                Don't have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/register")}
+                  className="link-btn"
+                >
+                  Sign Up
+                </button>
+              </p>
+            </div>
           </form>
         </div>
-
       </div>
     </div>
   );
