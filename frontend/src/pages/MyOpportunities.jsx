@@ -35,6 +35,7 @@ function MyOpportunities() {
           <h3>{job.title}</h3>
           <p>{job.company}</p>
           <p>{job.location}</p>
+          <p><strong>Salary / Stipend:</strong> {job.salaryStipend || "Not specified"}</p>
           <p><strong>Applicants:</strong> {job.applicants?.length || 0} students applied</p>
 
         </div>

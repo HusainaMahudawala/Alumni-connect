@@ -3,12 +3,19 @@ const Opportunity = require("../models/Opportunity");
 // Create Opportunity
 exports.createOpportunity = async (req, res) => {
   try {
+    const parseCSV = (value) =>
+      (value || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+
     const {
       title,
       company,
       location,
       type,
       workMode,
+      salaryStipend,
       overview,
       responsibilities,
       requiredSkills,
@@ -21,10 +28,11 @@ exports.createOpportunity = async (req, res) => {
       location,
       type,
       workMode,
+      salaryStipend,
       overview,
-      responsibilities: responsibilities.split(","),
-      requiredSkills: requiredSkills.split(","),
-      preferredSkills: preferredSkills.split(","),
+      responsibilities: parseCSV(responsibilities),
+      requiredSkills: parseCSV(requiredSkills),
+      preferredSkills: parseCSV(preferredSkills),
       postedBy: req.user.id
     });
 

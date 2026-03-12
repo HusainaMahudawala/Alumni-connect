@@ -9,6 +9,7 @@ function PostOpportunity() {
     location: "",
     type: "full-time",
     workMode: "onsite",
+    salaryStipend: "",
     overview: "",
     responsibilities: "",
     requiredSkills: "",
@@ -86,6 +87,13 @@ function PostOpportunity() {
           <option value="remote">Remote</option>
           <option value="hybrid">Hybrid</option>
         </select>
+
+        <input
+          type="text"
+          name="salaryStipend"
+          placeholder="Salary / Stipend (e.g., 8 LPA or 25000/month)"
+          onChange={handleChange}
+        />
 
         <textarea
           name="overview"

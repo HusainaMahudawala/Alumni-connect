@@ -169,6 +169,9 @@ function ViewApplicants() {
                   <div className="opportunity-meta">
                     <span className="meta-badge">{opportunity.type}</span>
                     <span className="meta-badge">{opportunity.workMode}</span>
+                    <span className="meta-badge">
+                      {opportunity.salaryStipend || "Salary/Stipend not set"}
+                    </span>
                     <span className="meta-location">📍 {opportunity.location || "Remote"}</span>
                   </div>
                 </div>

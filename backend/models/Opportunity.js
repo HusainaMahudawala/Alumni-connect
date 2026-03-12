@@ -34,6 +34,10 @@ const opportunitySchema = new mongoose.Schema(
       default: "onsite"
     },
 
+    salaryStipend: {
+      type: String
+    },
+
     overview: String,
 
     responsibilities: [String],

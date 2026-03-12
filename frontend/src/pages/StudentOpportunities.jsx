@@ -10,10 +10,29 @@ function StudentOpportunities() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [jobType, setJobType] = useState("all");
-  const [location_filter, setLocation] = useState("any");
+  const [workModeFilter, setWorkModeFilter] = useState("any");
   const [notification, setNotification] = useState(null);
   const [confirming, setConfirming] = useState(null);
   const [userData, setUserData] = useState(null);
+  const [savedJobs, setSavedJobs] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("savedJobs") || "[]");
+    } catch { return []; }
+  });
+  const [savingJob, setSavingJob] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = React.useRef(null);
+
+  // close dropdown when clicking outside
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -82,14 +101,50 @@ function StudentOpportunities() {
     }
   };
 
+  const hasApplied = (opp) =>
+    opp.applicants?.some((applicantId) => applicantId === user?._id);
+
+  const isSaved = (jobId) => savedJobs.some((j) => j._id === jobId);
+
+  const confirmSaveJob = (job) => {
+    if (isSaved(job._id)) {
+      // unsave immediately without prompt
+      const updated = savedJobs.filter((j) => j._id !== job._id);
+      setSavedJobs(updated);
+      localStorage.setItem("savedJobs", JSON.stringify(updated));
+      setNotification({ type: "success", text: "Job removed from saved list." });
+    } else {
+      setSavingJob(job);
+    }
+  };
+
+  const saveJob = (job) => {
+    const updated = [...savedJobs, job];
+    setSavedJobs(updated);
+    localStorage.setItem("savedJobs", JSON.stringify(updated));
+    setSavingJob(null);
+    setNotification({ type: "success", text: `"${job.title}" saved successfully!` });
+  };
+
+  const toDisplayLabel = (value) => {
+    if (!value) return "Not specified";
+    return value
+      .toString()
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  };
+
   const filtered = opportunities.filter((opp) => {
     const matchesSearch = !searchTerm || 
       opp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       opp.company?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesType = jobType === "all" || opp.type === jobType;
+    const matchesWorkMode =
+      workModeFilter === "any" || opp.workMode === workModeFilter;
     
-    return matchesSearch && matchesType;
+    return matchesSearch && matchesType && matchesWorkMode;
   });
 
   const handleLogout = () => {
@@ -149,23 +204,25 @@ function StudentOpportunities() {
                   onChange={(e) => setJobType(e.target.value)}
                 >
                   <option value="all">All</option>
-                  <option value="Full-time">Full-time</option>
-                  <option value="Part-time">Part-time</option>
-                  <option value="Internship">Internship</option>
+                  <option value="full-time">Full-time</option>
+                  <option value="part-time">Part-time</option>
+                  <option value="internship">Internship</option>
+                  <option value="contract">Contract</option>
                 </select>
               </label>
             </button>
             <button className="filter-btn">
               <label>
-                Location
+                Work Mode
                 <select
                   className="filter-select"
-                  value={location_filter}
-                  onChange={(e) => setLocation(e.target.value)}
+                  value={workModeFilter}
+                  onChange={(e) => setWorkModeFilter(e.target.value)}
                 >
                   <option value="any">Any</option>
                   <option value="remote">Remote</option>
                   <option value="onsite">On-site</option>
+                  <option value="hybrid">Hybrid</option>
                 </select>
               </label>
             </button>
@@ -260,7 +317,7 @@ function StudentOpportunities() {
             <div className="job-list">
               {filtered.length > 0 ? (
                 filtered.map((opp) => {
-                  const alreadyApplied = opp.applicants?.includes(user?._id);
+                  const alreadyApplied = hasApplied(opp);
                   const isSelected = selectedJob?._id === opp._id;
 
                   return (
@@ -280,7 +337,11 @@ function StudentOpportunities() {
                         {alreadyApplied && <span className="applied-badge">✓</span>}
                       </div>
                       <div className="job-card-meta">
-                        <span className="job-meta-item">{opp.type}</span>
+                        <span className="job-meta-item">{toDisplayLabel(opp.type)}</span>
+                        <span className="job-meta-item">{toDisplayLabel(opp.workMode)}</span>
+                        {opp.salaryStipend && (
+                          <span className="job-meta-item">{opp.salaryStipend}</span>
+                        )}
                         <span className="job-meta-item">
                           {opp.applicants?.length || 0} applicants
                         </span>
@@ -300,6 +361,7 @@ function StudentOpportunities() {
           <div className="job-detail">
             {selectedJob ? (
               <>
+                <div className="detail-scroll-body">
                 {/* Header */}
                 <div className="detail-header">
                   <div className="detail-company-icon">
@@ -309,9 +371,68 @@ function StudentOpportunities() {
                     <h1 className="detail-title">{selectedJob.title}</h1>
                     <p className="detail-company">{selectedJob.company}</p>
                   </div>
-                  <div className="detail-actions">
-                    <button className="detail-bookmark-btn">🔖</button>
-                    <button className="detail-menu-btn">⋮</button>
+                  <div className="detail-actions" ref={menuRef}>
+                    <button
+                      className={`detail-bookmark-btn ${isSaved(selectedJob._id) ? "saved" : ""}`}
+                      onClick={() => confirmSaveJob(selectedJob)}
+                      title={isSaved(selectedJob._id) ? "Remove from saved" : "Save this job"}
+                    >
+                      {isSaved(selectedJob._id) ? "🔖" : "🔖"}
+                    </button>
+                    <button
+                      className={`detail-menu-btn ${menuOpen ? "active" : ""}`}
+                      onClick={() => setMenuOpen((prev) => !prev)}
+                      title="More options"
+                    >
+                      ⋮
+                    </button>
+                    {menuOpen && (
+                      <div className="detail-dropdown">
+                        <button
+                          className="dropdown-item"
+                          onClick={() => {
+                            navigator.clipboard.writeText(window.location.href);
+                            setMenuOpen(false);
+                            setNotification({ type: "success", text: "Job link copied to clipboard!" });
+                          }}
+                        >
+                          <span className="dropdown-icon">🔗</span> Copy job link
+                        </button>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => {
+                            const subject = encodeURIComponent(`Job Opportunity: ${selectedJob.title} at ${selectedJob.company}`);
+                            const body = encodeURIComponent(
+                              `Hi,\n\nCheck out this opportunity:\n\nRole: ${selectedJob.title}\nCompany: ${selectedJob.company}\nType: ${selectedJob.type}\nLocation: ${selectedJob.location || "Not specified"}\n\nRegards`
+                            );
+                            window.open(`mailto:?subject=${subject}&body=${body}`);
+                            setMenuOpen(false);
+                          }}
+                        >
+                          <span className="dropdown-icon">📧</span> Share via Email
+                        </button>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => {
+                            confirmSaveJob(selectedJob);
+                            setMenuOpen(false);
+                          }}
+                        >
+                          <span className="dropdown-icon">🔖</span>
+                          {isSaved(selectedJob._id) ? "Remove from saved" : "Save this job"}
+                        </button>
+                        <div className="dropdown-divider" />
+                        <button
+                          className="dropdown-item danger"
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setNotification({ type: "error", text: "Report submitted. We will review this job." });
+                          }}
+                        >
+                          <span className="dropdown-icon">🚩</span> Report this job
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -319,19 +440,21 @@ function StudentOpportunities() {
                 <div className="detail-meta">
                   <div className="meta-item">
                     <span className="meta-label">Job Type</span>
-                    <span className="meta-value">{selectedJob.type}</span>
+                    <span className="meta-value">{toDisplayLabel(selectedJob.type)}</span>
+                  </div>
+                  <div className="meta-item">
+                    <span className="meta-label">Work Mode</span>
+                    <span className="meta-value">{toDisplayLabel(selectedJob.workMode)}</span>
+                  </div>
+                  <div className="meta-item">
+                    <span className="meta-label">Salary / Stipend</span>
+                    <span className="meta-value">
+                      {selectedJob.salaryStipend || "Not specified"}
+                    </span>
                   </div>
                   <div className="meta-item">
                     <span className="meta-label">Applicants</span>
                     <span className="meta-value">{selectedJob.applicants?.length || 0}</span>
-                  </div>
-                  <div className="meta-item">
-                    <span className="meta-label">Deadline</span>
-                    <span className="meta-value">
-                      {selectedJob.deadline
-                        ? new Date(selectedJob.deadline).toLocaleDateString()
-                        : "No deadline"}
-                    </span>
                   </div>
                   <div className="meta-item">
                     <span className="meta-label">Location</span>
@@ -343,42 +466,73 @@ function StudentOpportunities() {
 
                 {/* Description */}
                 <div className="detail-section">
-                  <h3 className="detail-section-title">Description</h3>
+                  <h3 className="detail-section-title">Overview</h3>
                   <p className="detail-description">
-                    {selectedJob.description || "No description provided"}
+                    {selectedJob.overview || "No overview provided"}
                   </p>
                 </div>
 
-                {/* Requirements */}
-                {selectedJob.requirements && (
+                {/* Responsibilities */}
+                {selectedJob.responsibilities?.length > 0 && (
                   <div className="detail-section">
-                    <h3 className="detail-section-title">Requirements</h3>
-                    <p className="detail-requirements">
-                      {selectedJob.requirements}
-                    </p>
+                    <h3 className="detail-section-title">Responsibilities</h3>
+                    <ul className="detail-list">
+                      {selectedJob.responsibilities.map((item, index) => (
+                        <li key={`responsibility-${index}`} className="detail-list-item">
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
+
+                {/* Required Skills */}
+                {selectedJob.requiredSkills?.length > 0 && (
+                  <div className="detail-section">
+                    <h3 className="detail-section-title">Required Skills</h3>
+                    <div className="detail-tags">
+                      {selectedJob.requiredSkills.map((skill, index) => (
+                        <span key={`required-skill-${index}`} className="detail-tag">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Preferred Skills */}
+                {selectedJob.preferredSkills?.length > 0 && (
+                  <div className="detail-section">
+                    <h3 className="detail-section-title">Preferred Skills</h3>
+                    <div className="detail-tags">
+                      {selectedJob.preferredSkills.map((skill, index) => (
+                        <span key={`preferred-skill-${index}`} className="detail-tag muted">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                </div>{/* end detail-scroll-body */}
 
                 {/* Footer with Apply Button */}
                 <div className="detail-footer">
                   <button
                     className={`detail-apply-btn ${
-                      selectedJob.applicants?.includes(user?._id) ? "applied" : ""
+                      hasApplied(selectedJob) ? "applied" : ""
                     }`}
-                    disabled={selectedJob.applicants?.includes(user?._id)}
+                    disabled={hasApplied(selectedJob)}
                     onClick={() => {
-                      if (!selectedJob.applicants?.includes(user?._id)) {
+                      if (!hasApplied(selectedJob)) {
                         setConfirming(selectedJob);
                       }
                     }}
                   >
-                    {selectedJob.applicants?.includes(user?._id)
+                    {hasApplied(selectedJob)
                       ? "Applied ✓"
                       : "Apply Now"}
                   </button>
-                  <a href="#" className="detail-report-btn">
-                    Report this job
-                  </a>
                 </div>
               </>
             ) : (
@@ -400,6 +554,28 @@ function StudentOpportunities() {
           >
             ×
           </span>
+        </div>
+      )}
+
+      {/* Save Job Confirmation Modal */}
+      {savingJob && (
+        <div className="modal-overlay" onClick={() => setSavingJob(null)}>
+          <div className="confirm-modal save-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="save-modal-icon">🔖</div>
+            <h2>Save this job?</h2>
+            <p>
+              Do you want to save <strong>{savingJob.title}</strong> at{" "}
+              <strong>{savingJob.company}</strong> to your saved list?
+            </p>
+            <div className="modal-actions">
+              <button className="cancel-btn" onClick={() => setSavingJob(null)}>
+                Cancel
+              </button>
+              <button className="confirm-btn save-confirm-btn" onClick={() => saveJob(savingJob)}>
+                Yes, Save Job
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
