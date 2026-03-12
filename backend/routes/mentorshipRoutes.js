@@ -5,6 +5,7 @@ const auth = require("../middleware/authMiddleware");
 const role = require("../middleware/roleMiddleware");
 const Mentorship = require("../models/Mentorship");
 const User = require("../models/User");
+const verifyToken = require("../middleware/authMiddleware");
 const {
   applyMentorship,
   viewRequests,
@@ -53,6 +54,7 @@ router.post(
 router.post("/apply/:alumniId", auth, role("student"), applyMentorship);
 
 // Alumni
+router.get("/", auth, role(["alumni"]), viewRequests);
 router.get("/requests", auth, role("alumni"), viewRequests);
 router.put("/update/:id", auth, role("alumni"), updateStatus);
 // Student

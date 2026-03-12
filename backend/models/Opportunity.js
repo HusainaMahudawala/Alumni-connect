@@ -13,22 +13,35 @@ const opportunitySchema = new mongoose.Schema(
       required: true
     },
 
-    description: {
+    company: {
       type: String,
       required: true
+    },
+
+    location: {
+      type: String
     },
 
     type: {
       type: String,
-      enum: ["job", "internship", "referral", "hackathon"],
-      required: true
+      enum: ["full-time", "internship", "part-time", "contract"],
+      default: "full-time"
     },
 
-    company: String,
+    workMode: {
+      type: String,
+      enum: ["onsite", "remote", "hybrid"],
+      default: "onsite"
+    },
 
-    deadline: Date,
+    overview: String,
 
-    // ✅ ADD THIS HERE
+    responsibilities: [String],
+
+    requiredSkills: [String],
+
+    preferredSkills: [String],
+
     applicants: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "User",

@@ -7,6 +7,10 @@ import StudentOpportunities from "./pages/StudentOpportunities";
 import Mentorship from "./pages/Mentorship";
 import AlumniDashboard from "./pages/AlumniDashboard";
 import LandingPage from "./pages/LandingPage";
+import PostOpportunity from "./pages/PostOpportunity";
+import MyOpportunities from "./pages/MyOpportunities";
+import ViewApplicants from "./pages/ViewApplicants";
+import MentorshipRequests from "./pages/MentorshipRequests";
 function App() {
   return (
     <Router>
@@ -32,6 +36,10 @@ function App() {
         />
         <Route path="/mentorship" element={<Mentorship />} />
         <Route path="/alumni-dashboard" element={<AlumniDashboard />} />
+        <Route path="/post-opportunity" element={<PostOpportunity />} />
+        <Route path="/my-opportunities" element={<MyOpportunities />} />
+<Route path="/view-applicants" element={<ViewApplicants />} />
+<Route path="/mentorship-requests" element={<MentorshipRequests />} />
       </Routes>
     </Router>
   );

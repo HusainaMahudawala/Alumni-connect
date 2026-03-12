@@ -3,17 +3,35 @@ const Opportunity = require("../models/Opportunity");
 // Create Opportunity
 exports.createOpportunity = async (req, res) => {
   try {
-    const { title, description } = req.body;
+    const {
+      title,
+      company,
+      location,
+      type,
+      workMode,
+      overview,
+      responsibilities,
+      requiredSkills,
+      preferredSkills
+    } = req.body;
 
     const opportunity = new Opportunity({
       title,
-      description,
+      company,
+      location,
+      type,
+      workMode,
+      overview,
+      responsibilities: responsibilities.split(","),
+      requiredSkills: requiredSkills.split(","),
+      preferredSkills: preferredSkills.split(","),
       postedBy: req.user.id
     });
 
     await opportunity.save();
 
     res.status(201).json(opportunity);
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

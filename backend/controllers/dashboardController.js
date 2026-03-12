@@ -43,6 +43,8 @@ exports.studentDashboard = async (req, res) => {
 // Alumni Dashboard
 exports.alumniDashboard = async (req, res) => {
   try {
+    const user = await User.findById(req.user.id).select("name email");
+
     const posted = await Opportunity.countDocuments({
       postedBy: req.user.id
     });
@@ -53,6 +55,8 @@ exports.alumniDashboard = async (req, res) => {
     const approved = mentorships.filter(m => m.status === "approved").length;
 
     res.json({
+      name: user?.name || "Alumni",
+      email: user?.email || "",
       postedOpportunities: posted,
       pendingRequests: pending,
       approvedMentorships: approved

@@ -9,21 +9,32 @@ function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        { email, password }
-      );
+  try {
+    const res = await axios.post(
+      "http://localhost:5000/api/auth/login",
+      { email, password }
+    );
 
-      localStorage.setItem("token", res.data.token);
+    localStorage.setItem("token", res.data.token);
+
+    const role = res.data.user.role; // get role from backend
+    localStorage.setItem("role", role);
+    localStorage.setItem("user", JSON.stringify(res.data.user));
+
+    if (role === "alumni") {
+      navigate("/alumni-dashboard");
+    } else if (role === "student") {
       navigate("/student");
-
-    } catch (err) {
-      alert(err.response?.data?.message || "Login Failed");
+    } else {
+      navigate("/");
     }
-  };
+
+  } catch (err) {
+    alert(err.response?.data?.message || "Login Failed");
+  }
+};
 
   return (
     <div className="login-page">

@@ -62,17 +62,20 @@ exports.viewRequests = async (req, res) => {
 // Alumni updates status (approve / reject)
 exports.updateStatus = async (req, res) => {
   try {
-    const { status } = req.body; // approved or rejected
+    const { status } = req.body;
 
     const mentorship = await Mentorship.findById(req.params.id);
 
-    if (!mentorship)
+    if (!mentorship) {
       return res.status(404).json({ message: "Request not found" });
+    }
 
     mentorship.status = status;
+
     await mentorship.save();
 
-    res.json({ message: "Status updated" });
+    res.json({ message: "Status updated successfully" });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
