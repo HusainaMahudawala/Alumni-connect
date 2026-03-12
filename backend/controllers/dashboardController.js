@@ -25,12 +25,20 @@ exports.studentDashboard = async (req, res) => {
       (m) => m.status === "approved"
     ).length;
 
+    const rejected = mentorships.filter(
+      (m) => m.status === "rejected"
+    ).length;
+
+    const availableOpportunities = await Opportunity.countDocuments({});
+
     res.json({
-      name: user.name,      // optional if you want
-      email: user.email,    // optional
+      name: user.name,
+      email: user.email,
       appliedOpportunities,
       pendingMentorships: pending,
-      approvedMentorships: approved
+      approvedMentorships: approved,
+      availableOpportunities,
+      rejectedMentorships: rejected
     });
 
   } catch (e) {

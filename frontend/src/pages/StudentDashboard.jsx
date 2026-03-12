@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import StudentStatsGraph from "../components/StudentStatsGraph";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./StudentDashboard.css";
@@ -243,63 +244,12 @@ function StudentDashboard() {
               </div>
             </div>
 
-            {/* Quick Stats */}
+            {/* Student Stats Graph */}
             <div className="quick-stats">
-              <h2 className="section-title">Quick Stats</h2>
-
-              <div className="progress-item">
-                <div className="progress-header">
-                  <span className="progress-label">Mentorship Progress</span>
-                  <span className="progress-percent">
-                    {studentData?.approvedMentorships || 0}/{(studentData?.approvedMentorships || 0) + (studentData?.pendingMentorships || 0)}
-                  </span>
-                </div>
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill" 
-                    style={{ 
-                      width: studentData ? `${(studentData.approvedMentorships / ((studentData.approvedMentorships + studentData.pendingMentorships) || 1)) * 100}%` : "0%",
-                      backgroundColor: "#a855f7"
-                    }}
-                  ></div>
-                </div>
+              <h2 className="section-title">Student Stats</h2>
+              <div style={{ height: 320 }}>
+                <StudentStatsGraph />
               </div>
-
-              <div className="progress-item">
-                <div className="progress-header">
-                  <span className="progress-label">Internship Applications</span>
-                  <span className="progress-percent">{studentData?.appliedOpportunities || 0}</span>
-                </div>
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill" 
-                    style={{ 
-                      width: `${Math.min((studentData?.appliedOpportunities || 0) * 10, 100)}%`,
-                      backgroundColor: "#10b981"
-                    }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="progress-item">
-                <div className="progress-header">
-                  <span className="progress-label">Pending Requests</span>
-                  <span className="progress-percent">{studentData?.pendingMentorships || 0}</span>
-                </div>
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill" 
-                    style={{ 
-                      width: `${Math.min((studentData?.pendingMentorships || 0) * 15, 100)}%`,
-                      backgroundColor: "#f59e0b"
-                    }}
-                  ></div>
-                </div>
-              </div>
-
-              <button className="detailed-analytics-btn">
-                View Detailed Analytics 📊
-              </button>
             </div>
           </div>
         </section>
