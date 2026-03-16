@@ -73,77 +73,80 @@ const StudentStatsGraph = () => {
     <div
       style={{
         width: "100%",
-        minHeight: 340,
-        maxWidth: 600,
-        margin: "0 auto",
         background: "#fff",
-        borderRadius: 24,
-        boxShadow: "0 12px 32px 0 rgba(31, 38, 135, 0.25), 0 1.5px 0 #fff inset",
-        padding: 24,
+        borderRadius: 16,
+        padding: "20px 16px 16px",
         display: "flex",
-        flexDirection: "row",
+        flexDirection: "column",
         alignItems: "center",
-        justifyContent: "space-between",
-        position: "relative"
+        gap: 20,
+        boxSizing: "border-box",
       }}
     >
-      <div style={{ width: "55%", minWidth: 220, maxWidth: 320, padding: "8px 0" }}>
+      {/* Doughnut chart */}
+      <div style={{ position: "relative", width: "100%", maxWidth: 200, height: 200 }}>
         <Doughnut
           data={data}
           options={{
             plugins: {
-              legend: {
-                display: false
-              },
+              legend: { display: false },
               tooltip: {
                 enabled: true,
                 backgroundColor: "#fff",
                 titleColor: "#222",
                 bodyColor: "#222",
-                borderColor: "#222",
+                borderColor: "#e5e7eb",
                 borderWidth: 1,
                 cornerRadius: 8,
-                padding: 12,
+                padding: 10,
                 displayColors: true,
-              }
+              },
             },
-            cutout: "70%",
+            cutout: "68%",
             responsive: true,
             maintainAspectRatio: false,
           }}
         />
       </div>
-      <div style={{ width: "45%", minWidth: 180, paddingLeft: 16 }}>
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {data.labels.map((label, idx) => (
-            <li
-              key={label}
+
+      {/* Legend */}
+      <ul
+        style={{
+          listStyle: "none",
+          padding: 0,
+          margin: 0,
+          width: "100%",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "10px 8px",
+        }}
+      >
+        {data.labels.map((label, idx) => (
+          <li
+            key={label}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#374151",
+            }}
+          >
+            <span
               style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 18,
-                fontSize: 16,
-                fontWeight: "bold",
-                color: "#333",
-                wordBreak: "break-word"
+                display: "inline-block",
+                width: 12,
+                height: 12,
+                borderRadius: 4,
+                flexShrink: 0,
+                background: data.datasets[0].backgroundColor[idx],
               }}
-            >
-              <span
-                style={{
-                  display: "inline-block",
-                  width: 22,
-                  height: 22,
-                  borderRadius: 6,
-                  marginRight: 12,
-                  background: data.datasets[0].backgroundColor[idx],
-                  boxShadow: "0 2px 8px 0 rgba(31,38,135,0.15)"
-                }}
-              ></span>
-              <span style={{ whiteSpace: "normal" }}>{label}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+            />
+            <span style={{ lineHeight: 1.3 }}>{label}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./AlumniDashboard.css";
+import "./MyOpportunities.css";
 
 const API_BASE = "http://localhost:5000/api";
 
@@ -47,6 +48,12 @@ function AlumniDashboard() {
   const [activityFilter, setActivityFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [modeFilter, setModeFilter] = useState("all");
+
+  const emptyPost = { title: "", company: "", location: "", type: "full-time", workMode: "onsite", salaryStipend: "", overview: "", responsibilities: "", requiredSkills: "", preferredSkills: "" };
+  const [postModal, setPostModal] = useState(false);
+  const [postForm, setPostForm] = useState(emptyPost);
+  const [posting, setPosting] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const storedUser = useMemo(() => {
     try {
@@ -149,6 +156,41 @@ function AlumniDashboard() {
     navigate("/");
   };
 
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const handlePostSubmit = async () => {
+    if (!postForm.title.trim() || !postForm.company.trim()) {
+      showToast("Job title and company are required.", "error");
+      return;
+    }
+    setPosting(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${API_BASE}/opportunity`, postForm, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPostModal(false);
+      setPostForm(emptyPost);
+      showToast("Opportunity posted successfully!");
+      // refresh stats
+      const token2 = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token2}` };
+      const [summaryRes, myOppRes] = await Promise.all([
+        axios.get(`${API_BASE}/dashboard/alumni`, { headers }),
+        axios.get(`${API_BASE}/opportunity/my`, { headers }),
+      ]);
+      setOpportunities(myOppRes.data || []);
+      setSummary((prev) => ({ ...prev, postedOpportunities: (myOppRes.data || []).length, ...summaryRes.data }));
+    } catch {
+      showToast("Failed to post opportunity.", "error");
+    } finally {
+      setPosting(false);
+    }
+  };
+
   const displayName = summary?.name || storedUser?.name || "Alumni";
   const displayEmail = summary?.email || storedUser?.email || "alumni@portal.com";
 
@@ -248,7 +290,7 @@ function AlumniDashboard() {
               <span className="action-brand-icon">🎓</span>
               <span>AlumniConnect</span>
             </div>
-            <button type="button" className="post-btn" onClick={() => navigate("/post-opportunity")}>
+            <button type="button" className="post-btn" onClick={() => setPostModal(true)}>
               + Post Opportunity
             </button>
           </section>
@@ -345,6 +387,13 @@ function AlumniDashboard() {
               </button>
               <button
                 type="button"
+                className={`filter-chip ${typeFilter === "hackathon" ? "active" : ""}`}
+                onClick={() => setTypeFilter("hackathon")}
+              >
+                Hackathon
+              </button>
+              <button
+                type="button"
                 className={`filter-chip ${modeFilter === "remote" ? "active" : ""}`}
                 onClick={() => setModeFilter(modeFilter === "remote" ? "all" : "remote")}
               >
@@ -399,6 +448,89 @@ function AlumniDashboard() {
           </section>
         </main>
       </div>
+
+      {/* ── Post Opportunity Modal ── */}
+      {postModal && (
+        <div className="mopp-modal-backdrop" onClick={() => setPostModal(false)}>
+          <div className="mopp-modal mopp-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="mopp-modal-header">
+              <h3>🚀 Post Opportunity</h3>
+              <button className="mopp-modal-close" onClick={() => { setPostModal(false); setPostForm(emptyPost); }}>✕</button>
+            </div>
+            <div className="mopp-modal-body">
+              <div className="mopp-field-row">
+                <div className="mopp-field">
+                  <label>Job Title <span className="mopp-required">*</span></label>
+                  <input type="text" value={postForm.title} placeholder="e.g. Frontend Developer"
+                    onChange={(e) => setPostForm({ ...postForm, title: e.target.value })} />
+                </div>
+                <div className="mopp-field">
+                  <label>Company <span className="mopp-required">*</span></label>
+                  <input type="text" value={postForm.company} placeholder="e.g. TechCorp"
+                    onChange={(e) => setPostForm({ ...postForm, company: e.target.value })} />
+                </div>
+              </div>
+              <div className="mopp-field-row">
+                <div className="mopp-field">
+                  <label>Location</label>
+                  <input type="text" value={postForm.location} placeholder="e.g. Bangalore"
+                    onChange={(e) => setPostForm({ ...postForm, location: e.target.value })} />
+                </div>
+                <div className="mopp-field">
+                  <label>Salary / Stipend</label>
+                  <input type="text" value={postForm.salaryStipend} placeholder="e.g. ₹8 LPA"
+                    onChange={(e) => setPostForm({ ...postForm, salaryStipend: e.target.value })} />
+                </div>
+              </div>
+              <div className="mopp-field-row">
+                <div className="mopp-field">
+                  <label>Job Type</label>
+                  <select value={postForm.type} onChange={(e) => setPostForm({ ...postForm, type: e.target.value })}>
+                    {["full-time", "internship", "part-time", "contract", "hackathon"].map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+                <div className="mopp-field">
+                  <label>Work Mode</label>
+                  <select value={postForm.workMode} onChange={(e) => setPostForm({ ...postForm, workMode: e.target.value })}>
+                    {["onsite", "remote", "hybrid"].map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="mopp-field">
+                <label>Job Overview</label>
+                <textarea rows={2} value={postForm.overview} placeholder="Brief description of the role..."
+                  onChange={(e) => setPostForm({ ...postForm, overview: e.target.value })} />
+              </div>
+              <div className="mopp-field">
+                <label>Responsibilities</label>
+                <textarea rows={2} value={postForm.responsibilities} placeholder="Key responsibilities, comma separated..."
+                  onChange={(e) => setPostForm({ ...postForm, responsibilities: e.target.value })} />
+              </div>
+              <div className="mopp-field-row">
+                <div className="mopp-field">
+                  <label>Required Skills</label>
+                  <input type="text" value={postForm.requiredSkills} placeholder="e.g. React, Node.js"
+                    onChange={(e) => setPostForm({ ...postForm, requiredSkills: e.target.value })} />
+                </div>
+                <div className="mopp-field">
+                  <label>Preferred Skills</label>
+                  <input type="text" value={postForm.preferredSkills} placeholder="e.g. TypeScript, Docker"
+                    onChange={(e) => setPostForm({ ...postForm, preferredSkills: e.target.value })} />
+                </div>
+              </div>
+            </div>
+            <div className="mopp-modal-footer">
+              <button className="mopp-btn-cancel" onClick={() => { setPostModal(false); setPostForm(emptyPost); }}>Cancel</button>
+              <button className="mopp-btn-save" onClick={handlePostSubmit} disabled={posting}>{posting ? "Posting…" : "Post Opportunity"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div className={`mopp-toast ${toast.type}`}>{toast.msg}</div>
+      )}
     </div>
   );
 }

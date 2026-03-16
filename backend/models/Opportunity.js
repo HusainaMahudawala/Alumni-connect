@@ -24,7 +24,7 @@ const opportunitySchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["full-time", "internship", "part-time", "contract"],
+      enum: ["full-time", "internship", "part-time", "contract", "hackathon"],
       default: "full-time"
     },
 

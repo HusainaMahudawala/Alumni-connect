@@ -147,6 +147,13 @@ function StudentOpportunities() {
     return matchesSearch && matchesType && matchesWorkMode;
   });
 
+  const jobTypeFilterLabel =
+    jobType === "all" ? "Job Type" : `Type: ${toDisplayLabel(jobType)}`;
+  const workModeFilterLabel =
+    workModeFilter === "any"
+      ? "Work Mode"
+      : `Mode: ${toDisplayLabel(workModeFilter)}`;
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/");
@@ -197,7 +204,7 @@ function StudentOpportunities() {
           <div className="filter-btn-group">
             <button className="filter-btn">
               <label>
-                Job Type
+                {jobTypeFilterLabel}
                 <select
                   className="filter-select"
                   value={jobType}
@@ -207,13 +214,14 @@ function StudentOpportunities() {
                   <option value="full-time">Full-time</option>
                   <option value="part-time">Part-time</option>
                   <option value="internship">Internship</option>
+                  <option value="hackathon">Hackathon</option>
                   <option value="contract">Contract</option>
                 </select>
               </label>
             </button>
             <button className="filter-btn">
               <label>
-                Work Mode
+                {workModeFilterLabel}
                 <select
                   className="filter-select"
                   value={workModeFilter}
@@ -258,11 +266,7 @@ function StudentOpportunities() {
                   className={`menu-item ${location.pathname === "/opportunity" ? "active" : ""}`}
                 >
                   <span className="menu-icon">💼</span>
-                  <span>Jobs</span>
-                </a>
-                <a href="#" className="menu-item">
-                  <span className="menu-icon">📚</span>
-                  <span>My Courses</span>
+                  <span>Opportunities</span>
                 </a>
                 <a
                   href="#"

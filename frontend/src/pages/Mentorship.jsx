@@ -191,11 +191,7 @@ function Mentorship() {
                   className={`menu-item ${location.pathname === "/opportunity" ? "active" : ""}`}
                 >
                   <span className="menu-icon">💼</span>
-                  <span>Jobs</span>
-                </a>
-                <a href="#" className="menu-item">
-                  <span className="menu-icon">📚</span>
-                  <span>My Courses</span>
+                  <span>Opportunities</span>
                 </a>
                 <a
                   href="#"

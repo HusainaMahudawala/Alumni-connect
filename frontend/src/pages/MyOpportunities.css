@@ -1,0 +1,704 @@
+.myopp-dashboard {
+  min-height: 100vh;
+  background: linear-gradient(130deg, #f8f9fd 0%, #f0f3f9 100%);
+  color: #1f2937;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.myopp-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 22px;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid #e6e8ef;
+  backdrop-filter: blur(8px);
+}
+
+.myopp-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.myopp-brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #5b60f7, #4f46e5);
+  color: #fff;
+}
+
+.myopp-brand-main {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.myopp-brand-sub {
+  margin: 0;
+  color: #6b7280;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.myopp-post-btn {
+  border: 1px solid #4f46e5;
+  background: #4f46e5;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.myopp-post-btn:hover {
+  background: #4338ca;
+  border-color: #4338ca;
+}
+
+.myopp-shell {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  min-height: calc(100vh - 69px);
+}
+
+.alumni-sidebar {
+  position: sticky;
+  top: 71px;
+  height: calc(100vh - 71px);
+  overflow: hidden;
+  border-right: 1px solid #e8e9ef;
+  background: #f7f8fb;
+  padding: 22px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sidebar-menu-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-menu-wrap::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-menu-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-menu-wrap::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.sidebar-menu-title {
+  margin: 0 10px 12px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.sidebar-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-menu-item {
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: #374151;
+  font-size: 15px;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.sidebar-menu-item:hover {
+  background: #eceff8;
+}
+
+.sidebar-menu-item.active {
+  background: #e8ecff;
+  border-color: #c9d2ff;
+  color: #3f42b8;
+  font-weight: 600;
+}
+
+.sidebar-menu-item.muted {
+  opacity: 0.8;
+}
+
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px;
+  flex-shrink: 0;
+}
+
+.profile-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  background: linear-gradient(135deg, #5b60f7, #4338ca);
+  flex-shrink: 0;
+}
+
+.profile-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.profile-role,
+.profile-email {
+  margin: 0;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.sidebar-logout {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.sidebar-logout:hover {
+  border-color: #4f46e5;
+  color: #4f46e5;
+}
+
+.myopp-main {
+  padding: 22px 28px;
+}
+
+.my-opportunities-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 20px 20px;
+  background: #f9fbff;
+  border: 1px solid #e6e8ef;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(31, 41, 55, 0.06);
+}
+
+.my-opportunities-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px 20px 0;
+}
+
+.my-opportunities-header h2 {
+  margin: 0;
+  font-size: 30px;
+  color: #1f2937;
+}
+
+.my-opportunities-header p {
+  margin: 8px 0 0;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.opportunity-count {
+  background: #e8ecff;
+  color: #3f42b8;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #c9d2ff;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* ===== CARD LIST ===== */
+.my-opportunities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 20px 24px;
+}
+
+.my-opportunity-card {
+  background: #ffffff;
+  border: 1px solid #e8eaf4;
+  border-left: 4px solid #5b60f7;
+  border-radius: 14px;
+  padding: 20px 24px 20px 20px;
+  box-shadow: 0 2px 8px rgba(91, 96, 247, 0.06), 0 1px 3px rgba(0,0,0,0.04);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.my-opportunity-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.13), 0 2px 6px rgba(0,0,0,0.06);
+  border-color: #c7d2fe;
+}
+
+.mopp-card-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mopp-card-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #5b60f7, #4338ca);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(91, 96, 247, 0.3);
+  margin-top: 2px;
+}
+
+.mopp-card-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.mopp-card-body h3 {
+  margin: 0 0 3px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.mopp-company {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.mopp-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.mopp-tag {
+  font-size: 12px;
+  color: #4b5563;
+  background: #f5f6ff;
+  border: 1px solid #dde1fa;
+  border-radius: 20px;
+  padding: 3px 10px;
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
+.mopp-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.mopp-meta-divider {
+  color: #d1d5db;
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ===== CARD ACTION BUTTONS ===== */
+.mopp-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  align-items: stretch;
+}
+
+.mopp-btn-edit,
+.mopp-btn-delete {
+  padding: 7px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.18s ease;
+  min-width: 90px;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.mopp-btn-edit {
+  background: #eef2ff;
+  color: #4f46e5;
+  border-color: #c7d2fe;
+}
+
+.mopp-btn-edit:hover {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+  box-shadow: 0 3px 8px rgba(79,70,229,0.25);
+}
+
+.mopp-btn-delete {
+  background: #fff5f5;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.mopp-btn-delete:hover {
+  background: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
+  box-shadow: 0 3px 8px rgba(220,38,38,0.25);
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-opp-icon {
+  font-size: 52px;
+  margin-bottom: 12px;
+}
+
+/* ===== MODAL ===== */
+.mopp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+  z-index: 200;
+  padding: 16px;
+}
+
+.mopp-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 540px;
+  box-shadow: 0 24px 60px rgba(17, 24, 39, 0.2);
+  animation: mopp-slide-up 0.2s ease;
+}
+
+.mopp-modal-sm {
+  max-width: 420px;
+}
+
+.mopp-modal-lg {
+  max-width: 680px;
+}
+
+@keyframes mopp-slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.mopp-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.mopp-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #111827;
+  font-weight: 700;
+}
+
+.mopp-modal-close {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  font-size: 15px;
+  cursor: pointer;
+  color: #6b7280;
+  display: grid;
+  place-items: center;
+}
+
+.mopp-modal-close:hover {
+  background: #e2e8f0;
+  color: #111827;
+}
+
+.mopp-modal-body {
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 65vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c7d2fe transparent;
+}
+
+.mopp-modal-body p {
+  margin: 0;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.mopp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mopp-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.mopp-required {
+  color: #dc2626;
+  margin-left: 2px;
+}
+
+.mopp-field input,
+.mopp-field select,
+.mopp-field textarea {
+  padding: 9px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #111827;
+  background: #f9fafb;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.mopp-field textarea {
+  resize: vertical;
+  min-height: 70px;
+  line-height: 1.55;
+}
+
+.mopp-field input:focus,
+.mopp-field select:focus,
+.mopp-field textarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.mopp-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.mopp-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px 18px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.mopp-btn-cancel {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mopp-btn-cancel:hover {
+  background: #f9fafb;
+}
+
+.mopp-btn-save {
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #4f46e5;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mopp-btn-save:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+.mopp-btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mopp-btn-delete-confirm {
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #dc2626;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mopp-btn-delete-confirm:hover {
+  background: #b91c1c;
+}
+
+/* ===== TOAST ===== */
+.mopp-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  padding: 14px 22px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+  z-index: 300;
+  animation: mopp-slide-up 0.25s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+
+.mopp-toast.success { background: #16a34a; }
+.mopp-toast.error   { background: #dc2626; }
+
+.opportunity-company {
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.opportunity-location {
+  color: #374151;
+  font-size: 14px;
+}
+
+.my-opportunities-empty {
+  border: 1px dashed #c9d2ff;
+  border-radius: 14px;
+  padding: 36px 20px;
+  text-align: center;
+  background: #f7f8ff;
+  margin: 0 20px 20px;
+}
+
+.my-opportunities-empty h3 {
+  margin: 0;
+  color: #1f2937;
+}
+
+.my-opportunities-empty p {
+  margin: 8px 0 0;
+  color: #6b7280;
+}
+
+@media (max-width: 640px) {
+  .myopp-topbar {
+    padding: 12px 14px;
+  }
+
+  .myopp-brand-main {
+    font-size: 16px;
+  }
+
+  .myopp-brand-sub {
+    font-size: 10px;
+  }
+
+  .myopp-post-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .myopp-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .alumni-sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #e8e9ef;
+  }
+
+  .myopp-main {
+    padding: 14px;
+  }
+
+  .my-opportunities-page {
+    margin-top: 0;
+    padding: 0 0 16px;
+    border-radius: 12px;
+  }
+
+  .my-opportunities-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 14px 0;
+  }
+
+  .my-opportunities-header h2 {
+    font-size: 24px;
+  }
+
+  .my-opportunities-grid {
+    padding: 0 14px 14px;
+  }
+
+  .my-opportunities-empty {
+    margin: 0 14px 14px;
+  }
+}

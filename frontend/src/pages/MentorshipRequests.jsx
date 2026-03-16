@@ -93,8 +93,8 @@ function MentorshipRequests() {
   const processedRequests = requests.filter(req => req.status !== "pending");
 
   return (
-    <div className="mentorship-wrapper">
-      <header className="mentorship-topbar">
+    <div className="mr-wrapper">
+      <header className="mr-topbar">
         <div className="topbar-brand">
           <div className="brand-icon">🎓</div>
           <div className="brand-copy">
@@ -109,8 +109,8 @@ function MentorshipRequests() {
         </div>
       </header>
 
-      <div className="mentorship-shell">
-        <aside className="mentorship-sidebar">
+      <div className="mr-shell">
+        <aside className="mr-sidebar">
           <div className="sidebar-menu-wrap">
             <p className="sidebar-menu-title">Menu</p>
             <nav className="sidebar-menu-list">
@@ -167,9 +167,9 @@ function MentorshipRequests() {
           </button>
         </aside>
 
-        <main className="mentorship-main">
-          <div className="mentorship-container">
-            <div className="mentorship-header">
+        <main className="mr-main">
+          <div className="mr-container">
+            <div className="mr-header">
               <h1>Mentorship Requests</h1>
               <p>Review and manage student mentorship applications</p>
             </div>
@@ -179,7 +179,7 @@ function MentorshipRequests() {
                 <p>Loading requests...</p>
               </div>
             ) : (
-              <>
+              <div className="sections-row">
                 {/* Pending Requests */}
                 <section className="requests-section">
                   <div className="section-title-bar">
@@ -239,13 +239,19 @@ function MentorshipRequests() {
                 </section>
 
                 {/* Processed Requests */}
-                {processedRequests.length > 0 && (
-                  <section className="requests-section">
-                    <div className="section-title-bar">
-                      <h2>Recent History</h2>
-                      <span className="count-badge secondary">{processedRequests.length}</span>
-                    </div>
+                <section className="requests-section">
+                  <div className="section-title-bar">
+                    <h2>Recent History</h2>
+                    <span className="count-badge secondary">{processedRequests.length}</span>
+                  </div>
 
+                  {processedRequests.length === 0 ? (
+                    <div className="empty-state">
+                      <div className="empty-icon">📋</div>
+                      <h3>No History Yet</h3>
+                      <p>Approved or rejected requests will appear here</p>
+                    </div>
+                  ) : (
                     <div className="requests-grid">
                       {processedRequests.map(req => (
                         <article key={req._id} className="request-card processed">
@@ -270,9 +276,9 @@ function MentorshipRequests() {
                         </article>
                       ))}
                     </div>
-                  </section>
-                )}
-              </>
+                  )}
+                </section>
+              </div>
             )}
           </div>
         </main>

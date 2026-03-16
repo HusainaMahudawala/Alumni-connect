@@ -80,6 +80,7 @@ function PostOpportunity() {
           <option value="internship">Internship</option>
           <option value="part-time">Part Time</option>
           <option value="contract">Contract</option>
+          <option value="hackathon">Hackathon</option>
         </select>
 
         <select name="workMode" onChange={handleChange}>

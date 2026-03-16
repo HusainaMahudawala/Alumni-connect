@@ -1,11 +1,11 @@
-.mentorship-wrapper {
+.mr-wrapper {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8f9fd 0%, #f0f3f9 100%);
   color: #1f2937;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.mentorship-topbar {
+.mr-topbar {
   position: sticky;
   top: 0;
   z-index: 20;
@@ -68,13 +68,13 @@
   cursor: pointer;
 }
 
-.mentorship-shell {
+.mr-shell {
   display: grid;
   grid-template-columns: 252px 1fr;
   min-height: calc(100vh - 71px);
 }
 
-.mentorship-sidebar {
+.mr-sidebar {
   position: sticky;
   top: 71px;
   height: calc(100vh - 71px);
@@ -202,51 +202,79 @@
   color: #4f46e5;
 }
 
-.mentorship-main {
+.mr-main {
+  padding: 22px 28px;
   overflow-y: auto;
   height: calc(100vh - 71px);
 }
 
-.mentorship-container {
+.mr-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 28px 24px;
+  border: 1px solid #e6e8ef;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fbfcff 0%, #f8faff 100%);
+  box-shadow: 0 14px 30px rgba(31, 41, 55, 0.06);
+  display: flex;
+  flex-direction: column;
 }
 
-.mentorship-header {
-  margin-bottom: 40px;
-  text-align: center;
+.mr-header {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e6e8ef;
+  text-align: left;
 }
 
-.mentorship-header h1 {
+.mr-header h1 {
   font-size: 36px;
   color: #1f2937;
   margin: 0 0 10px 0;
   font-weight: 700;
 }
 
-.mentorship-header p {
+.mr-header p {
   font-size: 16px;
   color: #6b7280;
   margin: 0;
+  max-width: 680px;
 }
 
 .loading-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 56px 20px;
   font-size: 18px;
   color: #6b7280;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.sections-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
 }
 
 .requests-section {
-  margin-bottom: 50px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.05);
+  height: 100%;
 }
 
 .section-title-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eceff8;
 }
 
 .section-title-bar h2 {
@@ -257,10 +285,10 @@
 }
 
 .count-badge {
-  padding: 6px 14px;
+  padding: 6px 12px;
   background: linear-gradient(135deg, #4f46e5, #4338ca);
   color: white;
-  border-radius: 20px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 700;
 }
@@ -270,11 +298,12 @@
 }
 
 .empty-state {
-  background: white;
+  background: #f8faff;
+  border: 1px dashed #cbd5e1;
   border-radius: 16px;
-  padding: 60px 40px;
+  padding: 50px 32px;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .empty-icon {
@@ -295,28 +324,30 @@
 }
 
 .requests-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .request-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.07);
   transition: all 0.3s ease;
-  border: 2px solid transparent;
+  border: 1px solid #e5e7eb;
+  border-top: 3px solid #5b60f7;
 }
 
 .request-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
-  border-color: #e0e7ff;
+  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.14);
+  transform: translateY(-3px);
+  border-color: #dbe2ff;
 }
 
 .request-card.processed {
-  opacity: 0.85;
+  opacity: 0.92;
+  border-top-color: #9ca3af;
 }
 
 .request-card.processed:hover {
@@ -327,9 +358,9 @@
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   padding-bottom: 16px;
-  border-bottom: 2px solid #f3f4f6;
+  border-bottom: 1px solid #eef2f7;
 }
 
 .student-avatar {
@@ -372,9 +403,9 @@
 }
 
 .status-badge {
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 13px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -397,7 +428,11 @@
 }
 
 .request-message {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  background: #f9fbff;
+  border: 1px solid #e9eeff;
+  border-radius: 12px;
+  padding: 12px;
 }
 
 .message-label {
@@ -414,10 +449,10 @@
   color: #374151;
   line-height: 1.6;
   margin: 0;
-  background: #f9fafb;
-  padding: 12px 16px;
+  background: #ffffff;
+  padding: 10px 12px;
   border-radius: 10px;
-  border-left: 4px solid #4f46e5;
+  border-left: 3px solid #4f46e5;
 }
 
 .request-actions {
@@ -434,6 +469,15 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.request-actions button:focus-visible,
+.sidebar-menu-item:focus-visible,
+.sidebar-logout:focus-visible,
+.topbar-notification:focus-visible,
+.close-notification:focus-visible {
+  outline: 3px solid rgba(79, 70, 229, 0.25);
+  outline-offset: 2px;
 }
 
 .btn-approve {
@@ -458,6 +502,11 @@
   box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
 }
 
+.btn-approve:active,
+.btn-reject:active {
+  transform: translateY(0);
+}
+
 /* Notification Toast */
 .notification-toast {
   position: fixed;
@@ -465,13 +514,14 @@
   right: 30px;
   padding: 16px 24px;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   gap: 16px;
   font-weight: 600;
   z-index: 1000;
   animation: slideIn 0.3s ease;
+  backdrop-filter: blur(6px);
 }
 
 @keyframes slideIn {
@@ -517,37 +567,43 @@
 
 /* Responsive Design */
 @media (max-width: 900px) {
-  .mentorship-shell {
+  .mr-shell {
     grid-template-columns: 1fr;
   }
 
-  .mentorship-sidebar {
+  .mr-sidebar {
     position: static;
     height: auto;
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
   }
 
-  .mentorship-main {
+  .mr-main {
     height: auto;
+    padding: 14px;
   }
 
-  .requests-grid {
+  .sections-row {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .mentorship-container {
-    padding: 20px 15px;
+  .mr-container {
+    padding: 16px 14px;
+    border-radius: 12px;
   }
 
-  .mentorship-header h1 {
+  .mr-header h1 {
     font-size: 28px;
   }
 
+  .section-title-bar h2 {
+    font-size: 21px;
+  }
+
   .request-card {
-    padding: 20px;
+    padding: 18px;
   }
 
   .request-header {
@@ -562,5 +618,27 @@
     bottom: 20px;
     right: 20px;
     left: 20px;
+  }
+}
+
+@media (max-width: 560px) {
+  .mentorship-topbar {
+    padding: 12px 14px;
+  }
+
+  .brand-main {
+    font-size: 16px;
+  }
+
+  .brand-sub {
+    font-size: 10px;
+  }
+
+  .requests-section {
+    padding: 14px;
+  }
+
+  .request-actions {
+    flex-direction: column;
   }
 }

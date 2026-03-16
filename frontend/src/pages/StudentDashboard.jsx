@@ -9,6 +9,21 @@ function StudentDashboard() {
   const location = useLocation();
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [savedJobsCount, setSavedJobsCount] = useState(0);
+  const [savedJobsModal, setSavedJobsModal] = useState(false);
+  const [savedJobsList, setSavedJobsList] = useState([]);
+  const [activityModal, setActivityModal] = useState(false);
+  const [pendingModal, setPendingModal] = useState(false);
+  const [pendingList, setPendingList] = useState([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+
+  const [approvedModal, setApprovedModal] = useState(false);
+  const [approvedList, setApprovedList] = useState([]);
+  const [approvedLoading, setApprovedLoading] = useState(false);
+
+  const [internshipModal, setInternshipModal] = useState(false);
+  const [internshipList, setInternshipList] = useState([]);
+  const [internshipLoading, setInternshipLoading] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -18,6 +33,106 @@ function StudentDashboard() {
   const handleNavigation = (path) => {
     navigate(path);
   };
+
+  const openPendingModal = async () => {
+    setPendingModal(true);
+    setPendingLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:5000/api/mentorship/my", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPendingList(res.data.filter((m) => m.status === "pending"));
+    } catch {
+      setPendingList([]);
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
+  const openApprovedModal = async () => {
+    setApprovedModal(true);
+    setApprovedLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:5000/api/mentorship/my", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setApprovedList(res.data.filter((m) => m.status === "approved"));
+    } catch {
+      setApprovedList([]);
+    } finally {
+      setApprovedLoading(false);
+    }
+  };
+
+  const openInternshipModal = async () => {
+    setInternshipModal(true);
+    setInternshipLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:5000/api/opportunity/applied", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setInternshipList(res.data);
+    } catch {
+      try {
+        const token = localStorage.getItem("token");
+        const payload = JSON.parse(atob(token.split(".")[1] || ""));
+        const currentUserId = payload?.id;
+
+        const fallbackRes = await axios.get("http://localhost:5000/api/opportunity", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const applied = (fallbackRes.data || []).filter((opp) =>
+          (opp.applicants || []).some((a) => {
+            if (!a) return false;
+            if (typeof a === "string") return a === currentUserId;
+            if (a.toString) return a.toString() === currentUserId;
+            if (a._id) return String(a._id) === currentUserId;
+            return false;
+          })
+        );
+
+        setInternshipList(applied);
+      } catch {
+        setInternshipList([]);
+      }
+    } finally {
+      setInternshipLoading(false);
+    }
+  };
+
+  const openSavedJobsModal = () => {
+    try {
+      const savedJobs = JSON.parse(localStorage.getItem("savedJobs") || "[]");
+      setSavedJobsList(Array.isArray(savedJobs) ? savedJobs : []);
+    } catch {
+      setSavedJobsList([]);
+    }
+    setSavedJobsModal(true);
+  };
+
+  useEffect(() => {
+    const syncSavedJobsCount = () => {
+      try {
+        const savedJobs = JSON.parse(localStorage.getItem("savedJobs") || "[]");
+        setSavedJobsCount(Array.isArray(savedJobs) ? savedJobs.length : 0);
+      } catch {
+        setSavedJobsCount(0);
+      }
+    };
+
+    syncSavedJobsCount();
+    window.addEventListener("storage", syncSavedJobsCount);
+    window.addEventListener("focus", syncSavedJobsCount);
+
+    return () => {
+      window.removeEventListener("storage", syncSavedJobsCount);
+      window.removeEventListener("focus", syncSavedJobsCount);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -117,11 +232,7 @@ function StudentDashboard() {
                   className={`menu-item ${location.pathname === "/opportunity" ? "active" : ""}`}
                 >
                   <span className="menu-icon">💼</span>
-                  <span>Jobs</span>
-                </a>
-                <a href="#" className="menu-item">
-                  <span className="menu-icon">📚</span>
-                  <span>My Courses</span>
+                  <span>Opportunities</span>
                 </a>
                 <a
                   href="#"
@@ -169,55 +280,52 @@ function StudentDashboard() {
           {/* Header */}
           <div className="dashboard-header">
             <div className="header-left">
-              <h1 className="page-title">Dashboard</h1>
-              <p className="header-subtitle">Welcome back, Student!</p>
+              <h1 className="page-title">Welcome back, {studentData?.name || "Student"}! 👋</h1>
+              <p className="header-subtitle">Here's what's happening with your account today.</p>
             </div>
           </div>
 
           {/* Stats Section */}
           <div className="dashboard-section">
-            <h2 className="section-title">Dashboard</h2>
-            <p className="section-subtitle">Welcome back! Here's what's happening today.</p>
-            
             <div className="stats-grid">
-              <div className="stat-card">
+              <div className="stat-card" onClick={openSavedJobsModal}>
                 <div className="stat-header">
-                  <h3>Active Courses</h3>
-                  <span className="stat-icon" style={{ backgroundColor: "#dbeafe" }}>📖</span>
+                  <h3>Saved Jobs</h3>
+                  <span className="stat-icon" style={{ backgroundColor: "#dbeafe" }}>🔖</span>
                 </div>
-                <p className="stat-number">5</p>
-                <p className="stat-detail">2 due soon</p>
-                <a href="#" className="stat-link">View all →</a>
+                <p className="stat-number">{savedJobsCount}</p>
+                <p className="stat-detail">Bookmarked opportunities</p>
+                <span className="stat-link">View all →</span>
               </div>
 
-              <div className="stat-card">
+              <div className="stat-card" onClick={openPendingModal}>
                 <div className="stat-header">
                   <h3>Pending Mentorships</h3>
                   <span className="stat-icon" style={{ backgroundColor: "#dcfce7" }}>⏳</span>
                 </div>
                 <p className="stat-number">{studentData?.pendingMentorships ?? 0}</p>
                 <p className="stat-detail">Awaiting response</p>
-                <a href="#" className="stat-link">View all →</a>
+                <span className="stat-link">View all →</span>
               </div>
 
-              <div className="stat-card">
+              <div className="stat-card" onClick={openApprovedModal}>
                 <div className="stat-header">
                   <h3>Approved Mentorships</h3>
                   <span className="stat-icon" style={{ backgroundColor: "#f3e8ff" }}>✅</span>
                 </div>
                 <p className="stat-number">{studentData?.approvedMentorships ?? 0}</p>
                 <p className="stat-detail">Active mentors</p>
-                <a href="#" className="stat-link">View all →</a>
+                <span className="stat-link">View all →</span>
               </div>
 
-              <div className="stat-card">
+              <div className="stat-card" onClick={openInternshipModal}>
                 <div className="stat-header">
                   <h3>Internship Applications</h3>
                   <span className="stat-icon" style={{ backgroundColor: "#fef3c7" }}>💼</span>
                 </div>
                 <p className="stat-number">{studentData?.appliedOpportunities ?? 0}</p>
                 <p className="stat-detail">Applied opportunities</p>
-                <a href="#" className="stat-link">View all →</a>
+                <span className="stat-link">View all →</span>
               </div>
             </div>
           </div>
@@ -228,12 +336,17 @@ function StudentDashboard() {
             <div className="recent-activities">
               <div className="section-header">
                 <h2 className="section-title">Recent Activities</h2>
-                <a href="#" className="view-all-link">View All</a>
+                <button className="view-all-link" onClick={() => setActivityModal(true)}>View All</button>
               </div>
 
               <div className="activities-list">
                 {recentActivities.map((activity) => (
-                  <div key={activity.id} className="activity-item">
+                  <div
+                    key={activity.id}
+                    className="activity-item"
+                    onClick={() => handleNavigation(activity.type === "opportunity" ? "/opportunity" : "/mentorship")}
+                    style={{ cursor: "pointer" }}
+                  >
                     <div className="activity-icon">{activity.icon}</div>
                     <div className="activity-content">
                       <p className="activity-title">{activity.title}</p>
@@ -247,13 +360,213 @@ function StudentDashboard() {
             {/* Student Stats Graph */}
             <div className="quick-stats">
               <h2 className="section-title">Student Stats</h2>
-              <div style={{ height: 320 }}>
-                <StudentStatsGraph />
-              </div>
+              <StudentStatsGraph />
             </div>
           </div>
         </section>
       </div>
+
+      {/* ── Recent Activities Modal ── */}
+      {activityModal && (
+        <div className="sd-modal-backdrop" onClick={() => setActivityModal(false)}>
+          <div className="sd-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sd-modal-header">
+              <h3>📌 Recent Activities</h3>
+              <button className="sd-modal-close" onClick={() => setActivityModal(false)}>✕</button>
+            </div>
+            <div className="sd-modal-body">
+              {recentActivities.length === 0 && (
+                <div className="sd-modal-empty">
+                  <span>📌</span>
+                  <p>No activities yet.</p>
+                </div>
+              )}
+              {recentActivities.map((activity) => (
+                <div key={activity.id} className="sd-activity-row">
+                  <div className="sd-activity-icon">{activity.icon}</div>
+                  <div className="sd-activity-info">
+                    <p className="sd-activity-title">{activity.title}</p>
+                    <p className="sd-activity-time">{activity.time}</p>
+                  </div>
+                  <button
+                    className="sd-activity-open"
+                    onClick={() => {
+                      setActivityModal(false);
+                      handleNavigation(activity.type === "opportunity" ? "/opportunity" : "/mentorship");
+                    }}
+                  >
+                    Open
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="sd-modal-footer">
+              <button className="sd-modal-btn" onClick={() => setActivityModal(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Saved Jobs Modal ── */}
+      {savedJobsModal && (
+        <div className="sd-modal-backdrop" onClick={() => setSavedJobsModal(false)}>
+          <div className="sd-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sd-modal-header">
+              <h3>🔖 Saved Jobs</h3>
+              <button className="sd-modal-close" onClick={() => setSavedJobsModal(false)}>✕</button>
+            </div>
+            <div className="sd-modal-body">
+              {savedJobsList.length === 0 && (
+                <div className="sd-modal-empty">
+                  <span>🔖</span>
+                  <p>No saved jobs yet.</p>
+                </div>
+              )}
+              {savedJobsList.map((opp) => (
+                <div key={opp._id} className="sd-opp-row">
+                  <div className="sd-opp-icon">🔖</div>
+                  <div className="sd-opp-info">
+                    <p className="sd-opp-title">{opp.title}</p>
+                    <p className="sd-opp-company">{opp.company}{opp.location ? ` · ${opp.location}` : ""}</p>
+                    <p className="sd-opp-meta">
+                      {opp.type && <span className="sd-opp-tag">{opp.type}</span>}
+                      {opp.workMode && <span className="sd-opp-tag">{opp.workMode}</span>}
+                      {opp.salaryStipend && <span className="sd-opp-tag">💰 {opp.salaryStipend}</span>}
+                    </p>
+                  </div>
+                  <span className="sd-mentorship-badge saved">Saved</span>
+                </div>
+              ))}
+            </div>
+            <div className="sd-modal-footer">
+              <button className="sd-modal-btn" onClick={() => { setSavedJobsModal(false); handleNavigation("/opportunity"); }}>
+                Browse Opportunities
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Approved Mentorships Modal ── */}
+      {approvedModal && (
+        <div className="sd-modal-backdrop" onClick={() => setApprovedModal(false)}>
+          <div className="sd-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sd-modal-header">
+              <h3>✅ Approved Mentorships</h3>
+              <button className="sd-modal-close" onClick={() => setApprovedModal(false)}>✕</button>
+            </div>
+            <div className="sd-modal-body">
+              {approvedLoading && <p className="sd-modal-state">Loading...</p>}
+              {!approvedLoading && approvedList.length === 0 && (
+                <div className="sd-modal-empty">
+                  <span>✅</span>
+                  <p>No approved mentorships yet.</p>
+                </div>
+              )}
+              {!approvedLoading && approvedList.map((m) => (
+                <div key={m._id} className="sd-mentorship-row">
+                  <div className="sd-mentorship-avatar">
+                    {m.alumni?.name?.charAt(0).toUpperCase() || "A"}
+                  </div>
+                  <div className="sd-mentorship-info">
+                    <p className="sd-mentorship-name">{m.alumni?.name || "Alumni"}</p>
+                    <p className="sd-mentorship-email">{m.alumni?.email || ""}</p>
+                    {m.purpose && <p className="sd-mentorship-purpose">"{m.purpose}"</p>}
+                  </div>
+                  <span className="sd-mentorship-badge approved">Approved</span>
+                </div>
+              ))}
+            </div>
+            <div className="sd-modal-footer">
+              <button className="sd-modal-btn" onClick={() => { setApprovedModal(false); handleNavigation("/mentorship"); }}>
+                Go to Mentorship Page
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Internship Applications Modal ── */}
+      {internshipModal && (
+        <div className="sd-modal-backdrop" onClick={() => setInternshipModal(false)}>
+          <div className="sd-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sd-modal-header">
+              <h3>💼 My Internship Applications</h3>
+              <button className="sd-modal-close" onClick={() => setInternshipModal(false)}>✕</button>
+            </div>
+            <div className="sd-modal-body">
+              {internshipLoading && <p className="sd-modal-state">Loading...</p>}
+              {!internshipLoading && internshipList.length === 0 && (
+                <div className="sd-modal-empty">
+                  <span>💼</span>
+                  <p>You haven't applied to any opportunities yet.</p>
+                </div>
+              )}
+              {!internshipLoading && internshipList.map((opp) => (
+                <div key={opp._id} className="sd-opp-row">
+                  <div className="sd-opp-icon">💼</div>
+                  <div className="sd-opp-info">
+                    <p className="sd-opp-title">{opp.title}</p>
+                    <p className="sd-opp-company">{opp.company}{opp.location ? ` · ${opp.location}` : ""}</p>
+                    <p className="sd-opp-meta">
+                      {opp.type && <span className="sd-opp-tag">{opp.type}</span>}
+                      {opp.workMode && <span className="sd-opp-tag">{opp.workMode}</span>}
+                      {opp.salaryStipend && <span className="sd-opp-tag">💰 {opp.salaryStipend}</span>}
+                    </p>
+                  </div>
+                  <span className="sd-mentorship-badge applied">Applied</span>
+                </div>
+              ))}
+            </div>
+            <div className="sd-modal-footer">
+              <button className="sd-modal-btn" onClick={() => { setInternshipModal(false); handleNavigation("/opportunity"); }}>
+                Browse Opportunities
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Pending Mentorships Modal ── */}
+      {pendingModal && (
+        <div className="sd-modal-backdrop" onClick={() => setPendingModal(false)}>
+          <div className="sd-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sd-modal-header">
+              <h3>⏳ Pending Mentorship Requests</h3>
+              <button className="sd-modal-close" onClick={() => setPendingModal(false)}>✕</button>
+            </div>
+            <div className="sd-modal-body">
+              {pendingLoading && <p className="sd-modal-state">Loading...</p>}
+              {!pendingLoading && pendingList.length === 0 && (
+                <div className="sd-modal-empty">
+                  <span>🤝</span>
+                  <p>No pending mentorship requests.</p>
+                </div>
+              )}
+              {!pendingLoading && pendingList.map((m) => (
+                <div key={m._id} className="sd-mentorship-row">
+                  <div className="sd-mentorship-avatar">
+                    {m.alumni?.name?.charAt(0).toUpperCase() || "A"}
+                  </div>
+                  <div className="sd-mentorship-info">
+                    <p className="sd-mentorship-name">{m.alumni?.name || "Alumni"}</p>
+                    <p className="sd-mentorship-email">{m.alumni?.email || ""}</p>
+                    {m.purpose && <p className="sd-mentorship-purpose">"{m.purpose}"</p>}
+                  </div>
+                  <span className="sd-mentorship-badge pending">Pending</span>
+                </div>
+              ))}
+            </div>
+            <div className="sd-modal-footer">
+              <button className="sd-modal-btn" onClick={() => { setPendingModal(false); handleNavigation("/mentorship"); }}>
+                Go to Mentorship Page
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
