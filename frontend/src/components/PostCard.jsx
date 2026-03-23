@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import ReactDOM from "react-dom";
 import axios from "axios";
 
-const PostCard = ({ post, onLike, onComment }) => {
+const PostCard = ({ post, onLike, onComment, userId }) => {
   const [comment, setComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -9,15 +10,63 @@ const PostCard = ({ post, onLike, onComment }) => {
   const [rating, setRating] = useState(0);
   const [ratingLoading, setRatingLoading] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
+  const [showAttachmentsModal, setShowAttachmentsModal] = useState(false);
+  const [enlargedMedia, setEnlargedMedia] = useState(null);
+  const [showOptions, setShowOptions] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [savedPosts, setSavedPosts] = useState(JSON.parse(localStorage.getItem('savedPosts') || '[]'));
+  const [editMode, setEditMode] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [likeDislikeInFlight, setLikeDislikeInFlight] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editVideo, setEditVideo] = useState(post.videoUrl || null);
+  const [editFile, setEditFile] = useState(post.attachedFileUrl || null);
+  const [newVideo, setNewVideo] = useState(null);
+  const [newFile, setNewFile] = useState(null);
+  const [showEditCameraModal, setShowEditCameraModal] = useState(false);
+  const [editCameraVideo, setEditCameraVideo] = useState(null);
+  const [editCameraVideoPreview, setEditCameraVideoPreview] = useState(null);
+  const [isEditRecording, setIsEditRecording] = useState(false);
+  const [editRecordingTime, setEditRecordingTime] = useState(0);
+  const editVideoRef = React.useRef(null);
+  const editCanvasRef = React.useRef(null);
+  const editStreamRef = React.useRef(null);
+  const editMediaRecorderRef = React.useRef(null);
+  const editRecordedChunksRef = React.useRef([]);
+  const editRecordingTimerRef = React.useRef(null);
+  const [removeConfirmation, setRemoveConfirmation] = useState(null); // 'video' or 'file'
 
-  const currentUserId = localStorage.getItem("userId");
-  const isLiked = post.likedBy?.includes(currentUserId);
-  const isDisliked = post.dislikedBy?.includes(currentUserId);
+  // Use userId from prop, fallback to localStorage
+  const currentUserId = userId || localStorage.getItem("userId");
+  
+  if (!currentUserId) {
+    console.warn('⚠️  WARNING: No userId available at all! userId prop:', userId, 'localStorage:', localStorage.getItem("userId"));
+  }
+  
+  const isLiked = post.likedBy?.some(id => id.toString() === currentUserId);
+  const isDisliked = post.dislikedBy?.some(id => id.toString() === currentUserId);
+  const isSaved = savedPosts.includes(post._id);
   const likeCount = post.likedBy?.length || 0;
   const dislikeCount = post.dislikedBy?.length || 0;
+  const attachmentCount = (post.videoUrl ? 1 : 0) + (post.attachedFileUrl ? 1 : 0);
+  
+  // Debug: Check if this is user's own post
+  const authorIdStr = post.authorId?.toString ? post.authorId.toString() : post.authorId;
+  const isOwnPost = post.authorId && currentUserId && authorIdStr === currentUserId;
+  
+  console.log(`Post ${post._id.slice(-6)}: userId=${currentUserId}, authorId=${authorIdStr}, isOwnPost=${isOwnPost}`);
+  
+  // Log like/dislike state
+  React.useEffect(() => {
+    console.log(`Post ${post._id.slice(-6)}: Likes=${likeCount}, Dislikes=${dislikeCount}, IsLiked=${isLiked}, IsDisliked=${isDisliked}`);
+  }, [likeCount, dislikeCount, isLiked, isDisliked, post._id]);
 
   const handleLike = async () => {
+    if (actionLoading || likeDislikeInFlight) return;
+    
     setActionLoading(true);
+    setLikeDislikeInFlight(true);
     try {
       const token = localStorage.getItem("token");
       await axios.post(
@@ -26,14 +75,20 @@ const PostCard = ({ post, onLike, onComment }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       onLike(post._id);
-    } catch {
+    } catch (error) {
+      console.error("Like error:", error);
       alert("Failed to like post.");
+    } finally {
+      setActionLoading(false);
+      setLikeDislikeInFlight(false);
     }
-    setActionLoading(false);
   };
 
   const handleDislike = async () => {
+    if (actionLoading || likeDislikeInFlight) return;
+    
     setActionLoading(true);
+    setLikeDislikeInFlight(true);
     try {
       const token = localStorage.getItem("token");
       await axios.post(
@@ -42,10 +97,183 @@ const PostCard = ({ post, onLike, onComment }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       onLike(post._id);
-    } catch {
+    } catch (error) {
+      console.error("Dislike error:", error);
       alert("Failed to dislike post.");
+    } finally {
+      setActionLoading(false);
+      setLikeDislikeInFlight(false);
     }
-    setActionLoading(false);
+  };
+
+  const handleDeletePost = async () => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    setDeleteLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `http://localhost:5000/api/posts/${post._id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Post deleted successfully.");
+      onLike(post._id);
+      setShowOptions(false);
+    } catch (error) {
+      alert("Failed to delete post: " + (error.response?.data?.message || error.message));
+    }
+    setDeleteLoading(false);
+  };
+
+  const handleEditPost = async () => {
+    if (!window.confirm("Are you sure you want to edit this post?")) return;
+    
+    if (!editContent.trim() && !newVideo && !newFile && !editVideo && !editFile) {
+      alert("Post must have content or attachments.");
+      return;
+    }
+    
+    setUpdateLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append('content', editContent);
+      
+      // Append new video if selected
+      if (newVideo) {
+        formData.append('video', newVideo);
+      }
+      
+      // Append new file if selected
+      if (newFile) {
+        formData.append('attachedFile', newFile);
+      }
+      
+      // Append flags to indicate what to keep
+      if (editVideo) {
+        formData.append('keepVideo', 'true');
+      }
+      if (editFile) {
+        formData.append('keepFile', 'true');
+      }
+      
+      const response = await axios.put(
+        `http://localhost:5000/api/posts/${post._id}`,
+        formData,
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          } 
+        }
+      );
+      alert("Post updated successfully.");
+      setShowEditModal(false);
+      onLike(post._id);
+    } catch (error) {
+      alert("Failed to update post: " + (error.response?.data?.message || error.message));
+    }
+    setUpdateLoading(false);
+  };
+
+  // Edit Camera Modal Handlers
+  const handleOpenEditCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user' },
+      });
+      editStreamRef.current = stream;
+      setShowEditCameraModal(true);
+      setTimeout(() => {
+        if (editVideoRef.current) {
+          editVideoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err) {
+      if (err.name === 'NotAllowedError') {
+        alert('Camera permission denied. Please enable camera access in your browser settings.');
+      } else if (err.name === 'NotFoundError') {
+        alert('No camera found on this device.');
+      } else if (err.name === 'NotReadableError') {
+        alert('Camera is already in use by another application.');
+      } else {
+        alert('Could not access camera: ' + err.message);
+      }
+      console.error('Camera error:', err);
+    }
+  };
+
+  const handleStartEditRecording = () => {
+    if (!editStreamRef.current) return;
+    
+    editRecordedChunksRef.current = [];
+    const mediaRecorder = new MediaRecorder(editStreamRef.current);
+    
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        editRecordedChunksRef.current.push(e.data);
+      }
+    };
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(editRecordedChunksRef.current, { type: 'video/webm' });
+      const videoUrl = URL.createObjectURL(blob);
+      setEditCameraVideoPreview(videoUrl);
+      setEditCameraVideo(blob);
+    };
+    
+    mediaRecorder.start();
+    editMediaRecorderRef.current = mediaRecorder;
+    setIsEditRecording(true);
+    setEditRecordingTime(0);
+    
+    editRecordingTimerRef.current = setInterval(() => {
+      setEditRecordingTime((prev) => prev + 1);
+    }, 1000);
+  };
+
+  const handleStopEditRecording = () => {
+    if (editMediaRecorderRef.current && editMediaRecorderRef.current.state !== 'inactive') {
+      editMediaRecorderRef.current.stop();
+      setIsEditRecording(false);
+      clearInterval(editRecordingTimerRef.current);
+      
+      editStreamRef.current?.getTracks().forEach((track) => track.stop());
+      setShowEditCameraModal(false);
+    }
+  };
+
+  const handleRetakeEditVideo = () => {
+    setEditCameraVideo(null);
+    setEditCameraVideoPreview(null);
+    setEditRecordingTime(0);
+    editRecordedChunksRef.current = [];
+  };
+
+  const handleConfirmRemoveEditAttachment = (type) => {
+    if (window.confirm(`Are you sure you want to remove this ${type}?`)) {
+      if (type === 'video') {
+        setEditVideo(null);
+        setNewVideo(null);
+      } else if (type === 'file') {
+        setEditFile(null);
+        setNewFile(null);
+      }
+    }
+  };
+
+  const handleSavePost = () => {
+    try {
+      let updated = [...savedPosts];
+      if (updated.includes(post._id)) {
+        updated = updated.filter(id => id !== post._id);
+      } else {
+        updated.push(post._id);
+      }
+      setSavedPosts(updated);
+      localStorage.setItem('savedPosts', JSON.stringify(updated));
+    } catch (error) {
+      alert("Failed to save post.");
+    }
   };
 
   const handleComment = async (e) => {
@@ -89,11 +317,59 @@ const PostCard = ({ post, onLike, onComment }) => {
 
   return (
     <div className="post-card">
-      <div className="post-header">
-        <span className="avatar">{post.authorName?.[0] || "U"}</span>
-        <span className="post-author">{post.authorName}</span>
-        <span className="post-role">{post.authorRole}</span>
-        <span className="post-date">{new Date(post.createdAt).toLocaleString()}</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '200px' }}>
+          <span className="avatar">{post.authorName?.[0] || "U"}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span className="post-author">{post.authorName}</span>
+            <span className="post-role">{post.authorRole}</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '200px', justifyContent: 'flex-end' }}>
+          <span className="post-date" style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>{new Date(post.createdAt).toLocaleString()}</span>
+          {isOwnPost && (
+            <div style={{ display: 'flex', gap: '5px' }}>
+              <button
+                onClick={() => setShowEditModal(true)}
+                style={{
+                  background: 'white',
+                  border: '1px solid #ccc',
+                  padding: '5px 8px',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                type="button"
+                title="Edit post"
+              >
+                ✏️
+              </button>
+              <button
+                onClick={handleDeletePost}
+                disabled={deleteLoading}
+                style={{
+                  background: 'white',
+                  border: '1px solid #ccc',
+                  padding: '5px 8px',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  cursor: deleteLoading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: deleteLoading ? 0.6 : 1
+                }}
+                type="button"
+                title="Delete post"
+              >
+                🗑️
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="post-content">{post.content}</div>
@@ -128,7 +404,7 @@ const PostCard = ({ post, onLike, onComment }) => {
         <button
           className={`action-btn ${isLiked ? 'liked' : ''}`}
           onClick={handleLike}
-          disabled={actionLoading}
+          disabled={actionLoading || likeDislikeInFlight}
           type="button"
         >
           👍 {likeCount}
@@ -136,7 +412,7 @@ const PostCard = ({ post, onLike, onComment }) => {
         <button
           className={`action-btn ${isDisliked ? 'disliked' : ''}`}
           onClick={handleDislike}
-          disabled={actionLoading}
+          disabled={actionLoading || likeDislikeInFlight}
           type="button"
         >
           👎 {dislikeCount}
@@ -144,8 +420,22 @@ const PostCard = ({ post, onLike, onComment }) => {
         <button className="action-btn" type="button">
           💬 {post.comments?.length || 0}
         </button>
-        <button className="action-btn" type="button">🔗</button>
-        <button className="action-btn" type="button">🔖</button>
+        <button 
+          className={`action-btn ${(post.videoUrl || post.attachedFileUrl) ? 'has-attachment' : ''}`}
+          onClick={() => setShowAttachmentsModal(!showAttachmentsModal)}
+          type="button"
+          title={attachmentCount > 0 ? `Click to view ${attachmentCount} attachment(s)` : "No attachments"}
+        >
+          🔗 {attachmentCount}
+        </button>
+        <button 
+          className={`action-btn ${isSaved ? 'saved' : ''}`}
+          onClick={handleSavePost}
+          type="button"
+          title={isSaved ? "Remove from saved" : "Save post"}
+        >
+          🔖 {isSaved ? '✓' : ''}
+        </button>
       </div>
 
       <div className="post-comments">
@@ -189,6 +479,401 @@ const PostCard = ({ post, onLike, onComment }) => {
           </button>
         </form>
       </div>
+
+      {/* Attachments Modal */}
+      {showAttachmentsModal && (post.videoUrl || post.attachedFileUrl) && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(5px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          {/* Enlarged Media View */}
+          {enlargedMedia && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1001
+            }}>
+              <button
+                onClick={() => setEnlargedMedia(null)}
+                style={{
+                  position: 'absolute',
+                  top: '20px',
+                  right: '20px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '40px',
+                  height: '40px',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  zIndex: 1002
+                }}
+              >
+                ✕
+              </button>
+              {enlargedMedia.type === 'video' ? (
+                <video 
+                  width="90%" 
+                  height="90%"
+                  controls 
+                  autoPlay
+                  style={{ borderRadius: '8px', backgroundColor: '#000', maxHeight: '90vh', maxWidth: '90vw' }}
+                >
+                  <source src={`http://localhost:5000${enlargedMedia.url}`} type="video/webm" />
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <div style={{
+                  backgroundColor: 'white',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  maxWidth: '90vw',
+                  maxHeight: '90vh',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center'
+                }}>
+                  <h3 style={{ margin: '0 0 15px 0' }}>{enlargedMedia.name}</h3>
+                  <p style={{ margin: '0 0 15px 0', fontSize: '14px', color: '#666' }}>
+                    File: {enlargedMedia.name}
+                  </p>
+                  <a 
+                    href={`http://localhost:5000${enlargedMedia.url}`}
+                    download={enlargedMedia.name}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      borderRadius: '4px',
+                      textDecoration: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                  >
+                    Download File
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Small Attachments Container */}
+          {!enlargedMedia && (
+            <div style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              padding: '20px',
+              borderRadius: '12px',
+              maxWidth: '500px',
+              width: '90%',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '15px',
+              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0 }}>Attachments</h3>
+                <button
+                  onClick={() => setShowAttachmentsModal(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Video Thumbnail */}
+              {post.videoUrl && (
+                <div
+                  onClick={() => setEnlargedMedia({ type: 'video', url: post.videoUrl, name: post.videoFileName })}
+                  style={{
+                    cursor: 'pointer',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    backgroundColor: '#000',
+                    transition: 'transform 0.2s',
+                    height: '120px'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  <video 
+                    width="100%" 
+                    height="100%"
+                    style={{ objectFit: 'cover' }}
+                  >
+                    <source src={`http://localhost:5000${post.videoUrl}`} type="video/webm" />
+                  </video>
+                </div>
+              )}
+
+              {/* File Box */}
+              {post.attachedFileUrl && (
+                <div
+                  onClick={() => setEnlargedMedia({ type: 'file', url: post.attachedFileUrl, name: post.attachedFileName })}
+                  style={{
+                    cursor: 'pointer',
+                    padding: '15px',
+                    backgroundColor: '#f0f0f0',
+                    borderRadius: '8px',
+                    border: '2px solid #ddd',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    transition: 'background-color 0.2s, transform 0.2s',
+                    height: '80px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#e8e8e8';
+                    e.currentTarget.style.transform = 'scale(1.02)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f0f0f0';
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                >
+                  <span style={{ fontSize: '32px' }}>📎</span>
+                  <div style={{ overflow: 'hidden', flex: 1 }}>
+                    <p style={{ margin: '0', fontWeight: '500', wordBreak: 'break-word', whiteSpace: 'normal' }}>
+                      {post.attachedFileName}
+                    </p>
+                    <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#666' }}>
+                      Click to view
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Edit Modal - Rendered as Portal */}
+      {showEditModal && ReactDOM.createPortal(
+        <div className="edit-post-modal-bg" onClick={() => setShowEditModal(false)}>
+          <div className="edit-post-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Edit Post</h2>
+            
+            {/* Content textarea */}
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              placeholder="What's on your mind?"
+              className="edit-post-modal-input"
+            />
+
+            {/* Current attachments */}
+            {(editVideo || editFile) && (
+              <div className="edit-post-attachments-section">
+                <h4>Current Attachments:</h4>
+                {editVideo && (
+                  <div className="edit-post-attachment-item">
+                    <p>🎥 Video attached</p>
+                    <button
+                      onClick={() => handleConfirmRemoveEditAttachment('video')}
+                      className="edit-post-attachment-remove-btn"
+                      type="button"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+                {editFile && (
+                  <div className="edit-post-attachment-item">
+                    <p>📎 {post.attachedFileName}</p>
+                    <button
+                      onClick={() => handleConfirmRemoveEditAttachment('file')}
+                      className="edit-post-attachment-remove-btn"
+                      type="button"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {!editVideo && !editFile && (
+              <div className="edit-post-attachments-section">
+                <h4>Current Attachments:</h4>
+                <p className="edit-post-no-attachments">No attachments</p>
+              </div>
+            )}
+
+            {/* Add new attachments */}
+            <div className="edit-post-file-section">
+              <div className="edit-post-file-input-wrapper">
+                <button
+                  onClick={handleOpenEditCamera}
+                  className="edit-camera-button"
+                  type="button"
+                >
+                  📹 Add/Replace Video
+                </button>
+                {editCameraVideoPreview && <span className="edit-post-file-selected">✓ Video recorded</span>}
+                {newVideo && <span className="edit-post-file-selected">✓ {newVideo.name}</span>}
+              </div>
+              
+              <div className="edit-post-file-input-wrapper">
+                <input
+                  type="file"
+                  onChange={(e) => setNewFile(e.target.files?.[0] || null)}
+                  id="edit-file-input"
+                />
+                <label htmlFor="edit-file-input" className="edit-post-file-input-label">
+                  📎 Add/Replace File
+                </label>
+                {newFile && <span className="edit-post-file-selected">✓ {newFile.name}</span>}
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="edit-post-modal-actions">
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditContent(post.content);
+                  setEditVideo(post.videoUrl || null);
+                  setEditFile(post.attachedFileUrl || null);
+                  setNewVideo(null);
+                  setNewFile(null);
+                }}
+                className="cancel-btn"
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditPost}
+                disabled={updateLoading}
+                className="save-btn"
+                type="button"
+              >
+                {updateLoading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Edit Camera Modal - Rendered as Portal */}
+      {showEditCameraModal && ReactDOM.createPortal(
+        <div className="edit-camera-modal-bg">
+          <div className="camera-modal">
+            <div className="camera-modal-header">
+              <h3>Record Video</h3>
+              <button
+                className="camera-close-btn"
+                onClick={() => {
+                  setShowEditCameraModal(false);
+                  editStreamRef.current?.getTracks().forEach((track) => track.stop());
+                  if (isEditRecording) {
+                    editMediaRecorderRef.current?.stop();
+                    setIsEditRecording(false);
+                    clearInterval(editRecordingTimerRef.current);
+                  }
+                }}
+                type="button"
+              >
+                ✕
+              </button>
+            </div>
+
+            {!editCameraVideoPreview ? (
+              <>
+                <video
+                  ref={editVideoRef}
+                  className="camera-video"
+                  autoPlay
+                  playsInline
+                />
+                <div style={{ textAlign: 'center', fontSize: '14px', color: 'rgba(100, 116, 139, 0.8)', marginTop: '12px' }}>
+                  {isEditRecording && <span>Recording: {editRecordingTime}s</span>}
+                </div>
+                <div className="camera-modal-actions">
+                  {!isEditRecording ? (
+                    <button
+                      onClick={handleStartEditRecording}
+                      className="camera-capture-btn"
+                      type="button"
+                    >
+                      🔴 Start Recording
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleStopEditRecording}
+                      className="camera-capture-btn"
+                      style={{ background: '#dc3545' }}
+                      type="button"
+                    >
+                      ⏹ Stop Recording
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setShowEditCameraModal(false);
+                      editStreamRef.current?.getTracks().forEach((track) => track.stop());
+                    }}
+                    className="camera-cancel-btn"
+                    type="button"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <video
+                  src={editCameraVideoPreview}
+                  controls
+                  className="camera-video"
+                />
+                <div className="camera-modal-actions">
+                  <button
+                    onClick={handleRetakeEditVideo}
+                    className="camera-cancel-btn"
+                    type="button"
+                  >
+                    Retake
+                  </button>
+                  <button
+                    onClick={() => {
+                      setNewVideo(editCameraVideo);
+                      setShowEditCameraModal(false);
+                      setEditCameraVideo(null);
+                      setEditCameraVideoPreview(null);
+                    }}
+                    className="camera-capture-btn"
+                    type="button"
+                  >
+                    ✓ Use Video
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

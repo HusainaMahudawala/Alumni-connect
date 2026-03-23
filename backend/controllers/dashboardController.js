@@ -32,6 +32,7 @@ exports.studentDashboard = async (req, res) => {
     const availableOpportunities = await Opportunity.countDocuments({});
 
     res.json({
+      _id: user._id,
       name: user.name,
       email: user.email,
       appliedOpportunities,

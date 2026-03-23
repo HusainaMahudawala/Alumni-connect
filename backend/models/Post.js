@@ -19,6 +19,22 @@ const PostSchema = new mongoose.Schema({
     type: String,
     default: 'Student',
   },
+  videoUrl: {
+    type: String,
+    default: null,
+  },
+  videoFileName: {
+    type: String,
+    default: null,
+  },
+  attachedFileUrl: {
+    type: String,
+    default: null,
+  },
+  attachedFileName: {
+    type: String,
+    default: null,
+  },
   likedBy: [
     {
       type: mongoose.Schema.Types.ObjectId,

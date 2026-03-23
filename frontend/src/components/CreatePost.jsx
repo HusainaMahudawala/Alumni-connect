@@ -8,42 +8,69 @@ const CreatePost = ({ onPostCreated }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showCameraModal, setShowCameraModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
   const [cameraPhotoPreview, setCameraPhotoPreview] = useState(null);
   const [attachedFile, setAttachedFile] = useState(null);
   const [attachedFileObj, setAttachedFileObj] = useState(null);
   const [attachedFilePreview, setAttachedFilePreview] = useState(null);
-  const [openedFile, setOpenedFile] = useState(null);
   const [enlargedImage, setEnlargedImage] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [videoPreview, setVideoPreview] = useState(null);
+  const [capturedVideo, setCapturedVideo] = useState(null);
+  const [capturedVideoObj, setCapturedVideoObj] = useState(null);
   const inputRef = useRef();
   const fileInputRef = useRef();
   const videoRef = useRef();
   const canvasRef = useRef();
   const streamRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
+  const recordingTimerRef = useRef(null);
 
   const emojis = ["😀", "😂", "😍", "🤔", "👍", "🎉", "❤️", "😢", "🔥", "💯"];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!content.trim() && !capturedImage) return;
+    if (!content.trim() && !capturedImage && !capturedVideo) return;
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
+      
+      // Create FormData to handle files
+      const formData = new FormData();
+      formData.append('content', content);
+      
+      // Append video file if it exists
+      if (capturedVideoObj) {
+        console.log('Appending video to FormData:', capturedVideoObj.name);
+        formData.append('video', capturedVideoObj);
+      }
+      
+      // Append attached file if it exists
+      if (attachedFileObj) {
+        console.log('Appending file to FormData:', attachedFileObj.name);
+        formData.append('attachedFile', attachedFileObj);
+      }
+      
       const res = await axios.post(
         "http://localhost:5000/api/posts",
-        { content },
-        { headers: { Authorization: `Bearer ${token}` } }
+        formData,
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          } 
+        }
       );
-      setContent("");
-      setCapturedImage(null);
-      setAttachedFile(null);
-      setAttachedFilePreview(null);
-      setModalOpen(false);
-      setShowEmojiPicker(false);
+      console.log('Post created successfully:', res.data);
       onPostCreated(res.data);
+      handleResetAll();
     } catch (err) {
-      alert("Failed to post.");
+      console.error('Post error:', err.response?.data || err.message);
+      alert("Failed to post: " + (err.response?.data?.error || err.message));
     }
     setLoading(false);
   };
@@ -118,6 +145,130 @@ const CreatePost = ({ onPostCreated }) => {
     inputRef.current?.focus();
   };
 
+  // Open video recorder
+  const handleOpenVideoRecorder = async () => {
+    setCameraError(null);
+    setVideoPreview(null);
+    setIsRecording(false);
+    setRecordingTime(0);
+    recordedChunksRef.current = [];
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user' },
+        audio: true,
+      });
+      streamRef.current = stream;
+      setShowVideoModal(true);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err) {
+      setCameraError('Could not access camera/microphone. Please check permissions.');
+      console.error('Video recorder error:', err);
+    }
+  };
+
+  // Start recording video
+  const handleStartRecording = () => {
+    if (streamRef.current && videoRef.current) {
+      recordedChunksRef.current = [];
+      const mediaRecorder = new MediaRecorder(streamRef.current);
+      mediaRecorderRef.current = mediaRecorder;
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        setVideoPreview(url);
+        setCapturedVideoObj(blob);
+      };
+      
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      
+      // Timer for recording duration
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    }
+  };
+
+  // Stop recording video
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    }
+  };
+
+  // Format recording time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Confirm and use the video
+  const handleConfirmVideo = () => {
+    if (videoPreview && capturedVideoObj) {
+      // Create a file object from the blob
+      const videoFile = new File([capturedVideoObj], `video_${Date.now()}.webm`, { type: 'video/webm' });
+      setCapturedVideo(videoPreview);
+      setCapturedVideoObj(videoFile);
+      handleCloseVideoModal();
+    }
+  };
+
+  // Retake video
+  const handleRetakeVideo = () => {
+    setVideoPreview(null);
+    setCapturedVideoObj(null);
+    recordedChunksRef.current = [];
+    setRecordingTime(0);
+  };
+
+  // Remove captured video
+  const handleRemoveVideo = () => {
+    setCapturedVideo(null);
+    setCapturedVideoObj(null);
+    if (videoPreview) {
+      URL.revokeObjectURL(videoPreview);
+    }
+    setVideoPreview(null);
+  };
+
+  // Close video modal
+  const handleCloseVideoModal = () => {
+    if (isRecording) {
+      handleStopRecording();
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setShowVideoModal(false);
+    setCameraError(null);
+    setVideoPreview(null);
+    setIsRecording(false);
+    setRecordingTime(0);
+    recordedChunksRef.current = [];
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+    }
+    inputRef.current?.focus();
+  };
+
   // Open modal on input focus
   const handleInputFocus = () => {
     setModalOpen(true);
@@ -168,17 +319,21 @@ const CreatePost = ({ onPostCreated }) => {
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log('File uploaded:', file.name, 'Type:', file.type);
       setAttachedFile(file.name);
       setAttachedFileObj(file);
       
       // Check if file is an image
       if (file.type.startsWith('image/')) {
+        console.log('Image file detected - showing preview');
         const reader = new FileReader();
         reader.onload = (event) => {
+          console.log('Image preview set');
           setAttachedFilePreview(event.target.result);
         };
         reader.readAsDataURL(file);
       } else {
+        console.log('Non-image file - showing file box instead');
         setAttachedFilePreview(null);
       }
       
@@ -190,12 +345,9 @@ const CreatePost = ({ onPostCreated }) => {
 
   const handleOpenFile = () => {
     if (attachedFileObj) {
-      setOpenedFile(attachedFileObj);
+      // Download the file
+      handleDownloadFile(attachedFileObj);
     }
-  };
-
-  const handleCloseOpenedFile = () => {
-    setOpenedFile(null);
   };
 
   const handleDownloadFile = (file) => {
@@ -206,14 +358,29 @@ const CreatePost = ({ onPostCreated }) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Delay revoke to ensure download completes
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   const handleRemoveAttachment = () => {
     setAttachedFile(null);
     setAttachedFileObj(null);
     setAttachedFilePreview(null);
-    setOpenedFile(null);
+  };
+
+  const handleResetAll = () => {
+    console.log('Resetting all form states');
+    setContent("");
+    setCapturedImage(null);
+    setCapturedVideo(null);
+    setCapturedVideoObj(null);
+    setAttachedFile(null);
+    setAttachedFileObj(null);
+    setAttachedFilePreview(null);
+    setModalOpen(false);
+    setShowEmojiPicker(false);
+    setShowVideoModal(false);
+    setShowCameraModal(false);
   };
 
   return (
@@ -228,11 +395,6 @@ const CreatePost = ({ onPostCreated }) => {
             onChange={(e) => setContent(e.target.value)}
             placeholder="Share something with the community..."
           />
-          <div className="create-post-icons">
-            <span className="icon">📷</span>
-            <span className="icon">😊</span>
-            <span className="icon">📎</span>
-          </div>
           <button className="create-post-btn" type="button" onClick={handleInputFocus}>
             Post
           </button>
@@ -274,42 +436,42 @@ const CreatePost = ({ onPostCreated }) => {
                 </div>
               )}
 
-              {/* Attached File Display */}
-              {attachedFile && (
-                <div className="attached-file-container">
-                  {attachedFilePreview ? (
-                    <div className="attached-image-wrapper">
-                      <img 
-                        src={attachedFilePreview} 
-                        alt="Attachment" 
-                        className="attached-image-thumbnail"
-                        onClick={() => handleEnlargeImage(attachedFilePreview)}
-                      />
+              {/* Captured Video Display */}
+              {capturedVideo && (
+                <div className="captured-media-container">
+                  <div className="captured-video-wrapper">
+                    <video 
+                      src={capturedVideo} 
+                      className="captured-video-thumbnail"
+                      controls
+                    />
+                    <button
+                      type="button"
+                      className="remove-video-btn"
+                      onClick={handleRemoveVideo}
+                      title="Remove video"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Attached File Display - Small Box Next to Video */}
+                  {attachedFile && !attachedFilePreview && (
+                    <div className="attached-file-box">
                       <button
                         type="button"
-                        className="remove-image-btn"
-                        onClick={handleRemoveAttachment}
-                        title="Remove attachment"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="attached-file-item">
-                      <button
-                        type="button"
-                        className="attachment-open-btn"
+                        className="file-box-btn"
                         onClick={handleOpenFile}
-                        title="Open file"
+                        title={`Click to open: ${attachedFile}`}
                       >
-                        <span className="attachment-icon">{getFileIcon(attachedFile)}</span>
-                        <span className="attachment-name">{attachedFile}</span>
+                        <span className="file-box-icon">{getFileIcon(attachedFile)}</span>
+                        <span className="file-box-name">{attachedFile}</span>
                       </button>
                       <button
                         type="button"
-                        className="remove-attachment-btn"
+                        className="file-box-remove"
                         onClick={handleRemoveAttachment}
-                        title="Remove attachment"
+                        title="Remove file"
                       >
                         ✕
                       </button>
@@ -318,34 +480,49 @@ const CreatePost = ({ onPostCreated }) => {
                 </div>
               )}
 
-              {/* Opened File Display */}
-              {openedFile && (
-                <div className="opened-file-container">
-                  <div className="opened-file-header">
-                    <span className="opened-file-icon">{getFileIcon(openedFile.name)}</span>
-                    <span className="opened-file-name">{openedFile.name}</span>
-                    <button
-                      type="button"
-                      className="opened-file-close-btn"
-                      onClick={handleCloseOpenedFile}
-                      title="Close file"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div className="opened-file-preview">
-                    <p>File ready to be attached</p>
-                    <button
-                      type="button"
-                      className="download-file-btn"
-                      onClick={() => handleDownloadFile(openedFile)}
-                    >
-                      💾 Download
-                    </button>
-                  </div>
+              {/* Attached File Display - When No Video */}
+              {attachedFile && !capturedVideo && !attachedFilePreview && (
+                <div className="attached-file-box-standalone">
+                  <button
+                    type="button"
+                    className="file-box-btn"
+                    onClick={handleOpenFile}
+                    title={`Click to open: ${attachedFile}`}
+                  >
+                    <span className="file-box-icon">{getFileIcon(attachedFile)}</span>
+                    <span className="file-box-name">{attachedFile}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="file-box-remove"
+                    onClick={handleRemoveAttachment}
+                    title="Remove file"
+                  >
+                    ✕
+                  </button>
                 </div>
               )}
-              
+
+              {/* Image File Preview */}
+              {attachedFilePreview && (
+                <div className="attached-image-preview-container">
+                  <img 
+                    src={attachedFilePreview} 
+                    alt="Attachment" 
+                    className="attached-image-thumbnail"
+                    onClick={() => handleEnlargeImage(attachedFilePreview)}
+                  />
+                  <button
+                    type="button"
+                    className="remove-image-btn"
+                    onClick={handleRemoveAttachment}
+                    title="Remove attachment"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
               {/* Emoji Picker */}
               {showEmojiPicker && (
                 <div className="emoji-picker">
@@ -368,11 +545,11 @@ const CreatePost = ({ onPostCreated }) => {
                   type="button"
                   className="modal-icon-btn"
                   onClick={() => {
-                    handleOpenCamera();
+                    handleOpenVideoRecorder();
                   }}
-                  title="Open camera"
+                  title="Record video"
                 >
-                  📷
+                  🎥
                 </button>
                 <button
                   type="button"
@@ -413,10 +590,7 @@ const CreatePost = ({ onPostCreated }) => {
                 <button
                   type="button"
                   className="create-post-btn cancel"
-                  onClick={() => {
-                    setModalOpen(false);
-                    setShowEmojiPicker(false);
-                  }}
+                  onClick={handleResetAll}
                 >
                   Cancel
                 </button>
@@ -523,7 +697,116 @@ const CreatePost = ({ onPostCreated }) => {
         </div>
       )}
 
-      {/* Enlarged Image Modal */}
+      {/* Video Recording Modal */}
+      {showVideoModal && (
+        <div className="video-modal-bg">
+          <div className="video-modal">
+            <div className="video-modal-header">
+              <h3>Record Your Experience</h3>
+              <button
+                type="button"
+                className="video-close-btn"
+                onClick={handleCloseVideoModal}
+              >
+                ✕
+              </button>
+            </div>
+            
+            {cameraError ? (
+              <div className="camera-error">
+                <p>{cameraError}</p>
+                <button
+                  type="button"
+                  className="create-post-btn"
+                  onClick={handleCloseVideoModal}
+                >
+                  Close
+                </button>
+              </div>
+            ) : videoPreview ? (
+              <>
+                <div className="video-preview-container">
+                  <video 
+                    src={videoPreview} 
+                    className="video-preview-playback"
+                    controls
+                  />
+                </div>
+                <div className="video-modal-actions">
+                  <button
+                    type="button"
+                    className="video-retake-btn"
+                    onClick={handleRetakeVideo}
+                  >
+                    🔄 Retake
+                  </button>
+                  <button
+                    type="button"
+                    className="video-confirm-btn"
+                    onClick={handleConfirmVideo}
+                  >
+                    ✓ Use Video
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <video
+                  ref={videoRef}
+                  className="video-recording-feed"
+                  autoPlay={true}
+                  playsInline={true}
+                  style={{
+                    width: '100%',
+                    borderRadius: '12px',
+                    backgroundColor: '#000',
+                  }}
+                />
+                
+                <div className="video-recording-info">
+                  {isRecording && (
+                    <div className="recording-indicator">
+                      <span className="recording-dot"></span>
+                      <span className="recording-text">Recording {formatTime(recordingTime)}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="video-modal-actions">
+                  {!isRecording ? (
+                    <>
+                      <button
+                        type="button"
+                        className="video-record-btn"
+                        onClick={handleStartRecording}
+                      >
+                        🔴 Start Recording
+                      </button>
+                      <button
+                        type="button"
+                        className="video-cancel-btn"
+                        onClick={handleCloseVideoModal}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="video-stop-btn"
+                        onClick={handleStopRecording}
+                      >
+                        ⏹ Stop Recording
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       {enlargedImage && (
         <div 
           className="enlarged-image-modal-bg" 

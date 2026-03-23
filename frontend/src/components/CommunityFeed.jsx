@@ -47,6 +47,14 @@ const CommunityFeed = () => {
     }
   }, []);
 
+  // Ensure userId is in localStorage whenever userData changes
+  useEffect(() => {
+    if (userData?._id) {
+      localStorage.setItem("userId", userData._id);
+      console.log('✅ userData updated, userId in localStorage:', userData._id);
+    }
+  }, [userData]);
+
   // Reset expanded notification when notification changes
   useEffect(() => {
     setExpandedNotification(false);
@@ -89,9 +97,12 @@ const CommunityFeed = () => {
       const res = await axios.get("http://localhost:5000/api/dashboard/student", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log('✅ fetchUserData response:', res.data);
       setUserData(res.data);
       localStorage.setItem("userId", res.data._id);
-    } catch {
+      console.log('✅ userId saved to localStorage:', res.data._id);
+    } catch (error) {
+      console.error('❌ fetchUserData error:', error.response?.data || error.message);
       setUserData(null);
     }
   };
@@ -273,6 +284,9 @@ const CommunityFeed = () => {
     await fetchPosts();
   };
 
+  // Get current user ID from either userData or localStorage
+  const currentUserId = userData?._id || localStorage.getItem("userId");
+  
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -554,6 +568,7 @@ const CommunityFeed = () => {
                         post={post}
                         onLike={handleLike}
                         onComment={handleComment}
+                        userId={currentUserId}
                       />
                     ))}
                   </div>
@@ -661,6 +676,7 @@ const CommunityFeed = () => {
                     post={post}
                     onLike={handleLike}
                     onComment={handleComment}
+                    userId={currentUserId}
                   />
                 ))}
             </div>
