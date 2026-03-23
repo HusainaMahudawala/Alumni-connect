@@ -283,7 +283,14 @@ function StudentOpportunities() {
                   <span className="menu-icon">📅</span>
                   <span>Events</span>
                 </a>
-                <a href="#" className="menu-item">
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigation("/community");
+                  }}
+                  className={`menu-item ${location.pathname === "/community" ? "active" : ""}`}
+                >
                   <span className="menu-icon">💬</span>
                   <span>Community Feed</span>
                 </a>

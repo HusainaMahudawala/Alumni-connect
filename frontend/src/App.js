@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import CommunityFeed from "./components/CommunityFeed";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import StudentDashboard from "./pages/StudentDashboard";
@@ -15,6 +16,14 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route
+          path="/community"
+          element={
+            <ProtectedRoute>
+              <CommunityFeed />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

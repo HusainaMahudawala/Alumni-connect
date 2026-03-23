@@ -7,6 +7,24 @@ import "./StudentDashboard.css";
 function StudentDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Fetch applied opportunities whenever dashboard is loaded or navigated to
+  useEffect(() => {
+    const fetchAppliedOpportunities = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("http://localhost:5000/api/opportunity/applied", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setInternshipList(res.data);
+      } catch {
+        setInternshipList([]);
+      }
+    };
+    if (location.pathname === "/student") {
+      fetchAppliedOpportunities();
+    }
+  }, [location.pathname]);
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [savedJobsCount, setSavedJobsCount] = useState(0);
@@ -160,11 +178,36 @@ function StudentDashboard() {
   }, [navigate]);
 
   // Activities based on backend data
+  // Count each job type from internshipList
+  const internshipCount = internshipList.filter(opp => opp.type === "internship").length;
+  const fullTimeCount = internshipList.filter(opp => opp.type === "full-time").length;
+  const partTimeCount = internshipList.filter(opp => opp.type === "part-time").length;
+  const hackathonCount = internshipList.filter(opp => opp.type === "hackathon").length;
+  const contractCount = internshipList.filter(opp => opp.type === "contract").length;
+  const jobCount = internshipList.filter(opp => opp.type === "job").length;
+
+
+  // Build the applied string with proper comma and 'and' handling
+  const appliedTypes = [];
+  if (internshipCount) appliedTypes.push(`${internshipCount} internship${internshipCount > 1 ? 's' : ''}`);
+  if (jobCount) appliedTypes.push(`${jobCount} job${jobCount > 1 ? 's' : ''}`);
+  if (fullTimeCount) appliedTypes.push(`${fullTimeCount} full-time job${fullTimeCount > 1 ? 's' : ''}`);
+  if (partTimeCount) appliedTypes.push(`${partTimeCount} part-time job${partTimeCount > 1 ? 's' : ''}`);
+  if (hackathonCount) appliedTypes.push(`${hackathonCount} hackathon${hackathonCount > 1 ? 's' : ''}`);
+  if (contractCount) appliedTypes.push(`${contractCount} contract job${contractCount > 1 ? 's' : ''}`);
+
+  let appliedString = 'You have not applied to any opportunities';
+  if (appliedTypes.length === 1) {
+    appliedString = `You have applied to ${appliedTypes[0]}`;
+  } else if (appliedTypes.length > 1) {
+    appliedString = `You have applied to ${appliedTypes.slice(0, -1).join(', ')} and ${appliedTypes[appliedTypes.length - 1]}`;
+  }
+
   const recentActivities = studentData ? [
     {
       id: 1,
       type: "opportunity",
-      title: `You have applied to ${studentData.appliedOpportunities || 0} internship opportunities`,
+      title: appliedString,
       time: "Today",
       icon: "💼"
     },
@@ -249,7 +292,14 @@ function StudentDashboard() {
                   <span className="menu-icon">📅</span>
                   <span>Events</span>
                 </a>
-                <a href="#" className="menu-item">
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigation("/community");
+                  }}
+                  className={`menu-item ${location.pathname === "/community" ? "active" : ""}`}
+                >
                   <span className="menu-icon">💬</span>
                   <span>Community Feed</span>
                 </a>
@@ -320,7 +370,7 @@ function StudentDashboard() {
 
               <div className="stat-card" onClick={openInternshipModal}>
                 <div className="stat-header">
-                  <h3>Internship Applications</h3>
+                    <h3>Applications</h3>
                   <span className="stat-icon" style={{ backgroundColor: "#fef3c7" }}>💼</span>
                 </div>
                 <p className="stat-number">{studentData?.appliedOpportunities ?? 0}</p>
