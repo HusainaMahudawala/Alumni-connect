@@ -481,140 +481,27 @@ const PostCard = ({ post, onLike, onComment, userId }) => {
       </div>
 
       {/* Attachments Modal */}
-      {showAttachmentsModal && (post.videoUrl || post.attachedFileUrl) && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          backdropFilter: 'blur(5px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          {/* Enlarged Media View */}
-          {enlargedMedia && (
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1001
-            }}>
+      {/* Attachments Modal - Rendered as Portal */}
+      {showAttachmentsModal && (post.videoUrl || post.attachedFileUrl) && !enlargedMedia && ReactDOM.createPortal(
+        <div className="attachments-modal-bg" onClick={() => setShowAttachmentsModal(false)}>
+          <div className="attachments-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="attachments-modal-header">
+              <h3>Attachments</h3>
               <button
-                onClick={() => setEnlargedMedia(null)}
-                style={{
-                  position: 'absolute',
-                  top: '20px',
-                  right: '20px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '40px',
-                  height: '40px',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  zIndex: 1002
-                }}
+                className="attachments-close-btn"
+                onClick={() => setShowAttachmentsModal(false)}
+                type="button"
               >
                 ✕
               </button>
-              {enlargedMedia.type === 'video' ? (
-                <video 
-                  width="90%" 
-                  height="90%"
-                  controls 
-                  autoPlay
-                  style={{ borderRadius: '8px', backgroundColor: '#000', maxHeight: '90vh', maxWidth: '90vw' }}
-                >
-                  <source src={`http://localhost:5000${enlargedMedia.url}`} type="video/webm" />
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <div style={{
-                  backgroundColor: 'white',
-                  padding: '20px',
-                  borderRadius: '8px',
-                  maxWidth: '90vw',
-                  maxHeight: '90vh',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center'
-                }}>
-                  <h3 style={{ margin: '0 0 15px 0' }}>{enlargedMedia.name}</h3>
-                  <p style={{ margin: '0 0 15px 0', fontSize: '14px', color: '#666' }}>
-                    File: {enlargedMedia.name}
-                  </p>
-                  <a 
-                    href={`http://localhost:5000${enlargedMedia.url}`}
-                    download={enlargedMedia.name}
-                    style={{
-                      padding: '10px 20px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      borderRadius: '4px',
-                      textDecoration: 'none',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
-                  >
-                    Download File
-                  </a>
-                </div>
-              )}
             </div>
-          )}
 
-          {/* Small Attachments Container */}
-          {!enlargedMedia && (
-            <div style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              padding: '20px',
-              borderRadius: '12px',
-              maxWidth: '500px',
-              width: '90%',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '15px',
-              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0 }}>Attachments</h3>
-                <button
-                  onClick={() => setShowAttachmentsModal(false)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '24px',
-                    cursor: 'pointer',
-                    padding: 0
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-
+            <div className="attachments-container">
               {/* Video Thumbnail */}
               {post.videoUrl && (
                 <div
+                  className="attachment-thumbnail attachment-video"
                   onClick={() => setEnlargedMedia({ type: 'video', url: post.videoUrl, name: post.videoFileName })}
-                  style={{
-                    cursor: 'pointer',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    backgroundColor: '#000',
-                    transition: 'transform 0.2s',
-                    height: '120px'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                 >
                   <video 
                     width="100%" 
@@ -629,42 +516,58 @@ const PostCard = ({ post, onLike, onComment, userId }) => {
               {/* File Box */}
               {post.attachedFileUrl && (
                 <div
+                  className="attachment-thumbnail attachment-file"
                   onClick={() => setEnlargedMedia({ type: 'file', url: post.attachedFileUrl, name: post.attachedFileName })}
-                  style={{
-                    cursor: 'pointer',
-                    padding: '15px',
-                    backgroundColor: '#f0f0f0',
-                    borderRadius: '8px',
-                    border: '2px solid #ddd',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    transition: 'background-color 0.2s, transform 0.2s',
-                    height: '80px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#e8e8e8';
-                    e.currentTarget.style.transform = 'scale(1.02)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f0f0f0';
-                    e.currentTarget.style.transform = 'scale(1)';
-                  }}
                 >
-                  <span style={{ fontSize: '32px' }}>📎</span>
-                  <div style={{ overflow: 'hidden', flex: 1 }}>
-                    <p style={{ margin: '0', fontWeight: '500', wordBreak: 'break-word', whiteSpace: 'normal' }}>
-                      {post.attachedFileName}
-                    </p>
-                    <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#666' }}>
-                      Click to view
-                    </p>
+                  <div className="attachment-file-icon">📎</div>
+                  <div className="attachment-file-info">
+                    <p className="attachment-file-name">{post.attachedFileName}</p>
+                    <p className="attachment-file-hint">Click to view</p>
                   </div>
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Enlarged Media View - Rendered as Portal */}
+      {enlargedMedia && ReactDOM.createPortal(
+        <div className="attachments-enlarged-bg" onClick={() => setEnlargedMedia(null)}>
+          <div className="attachments-enlarged-container" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="attachments-enlarged-close"
+              onClick={() => setEnlargedMedia(null)}
+              type="button"
+            >
+              ✕
+            </button>
+            {enlargedMedia.type === 'video' ? (
+              <video 
+                controls 
+                autoPlay
+                className="attachments-enlarged-video"
+              >
+                <source src={`http://localhost:5000${enlargedMedia.url}`} type="video/webm" />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <div className="attachments-enlarged-file">
+                <h3>{enlargedMedia.name}</h3>
+                <p>File: {enlargedMedia.name}</p>
+                <a 
+                  href={`http://localhost:5000${enlargedMedia.url}`}
+                  download={enlargedMedia.name}
+                  className="attachments-download-btn"
+                >
+                  Download File
+                </a>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit Modal - Rendered as Portal */}

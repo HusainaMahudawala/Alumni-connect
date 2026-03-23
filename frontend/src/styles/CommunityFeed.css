@@ -2289,6 +2289,244 @@
   cursor: not-allowed;
 }
 
+/* Attachments Modal with Blur Background */
+.attachments-modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(8px);
+  z-index: 2050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.attachments-modal {
+  background: var(--cf-card);
+  border-radius: 22px;
+  box-shadow: 0 18px 60px rgba(15, 23, 42, 0.25);
+  padding: 24px 28px;
+  border: 1px solid var(--cf-border);
+  max-width: 550px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: slideUp 0.3s ease;
+}
+
+.attachments-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.attachments-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--cf-text);
+}
+
+.attachments-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: rgba(100, 116, 139, 0.7);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.attachments-close-btn:hover {
+  color: var(--cf-text);
+  background: rgba(100, 116, 139, 0.1);
+  transform: scale(1.1);
+}
+
+.attachments-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.attachment-thumbnail {
+  cursor: pointer;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.attachment-video {
+  background: #000;
+  height: 140px;
+}
+
+.attachment-video:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2);
+}
+
+.attachment-file {
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.8), rgba(248, 250, 252, 0.6));
+  border: 1.5px solid rgba(148, 163, 184, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 90px;
+  border-radius: 10px;
+}
+
+.attachment-file:hover {
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(248, 250, 252, 0.75));
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: scale(1.02);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.15);
+}
+
+.attachment-file-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.attachment-file-info {
+  overflow: hidden;
+  flex: 1;
+}
+
+.attachment-file-name {
+  margin: 0;
+  font-weight: 600;
+  color: var(--cf-text);
+  word-break: break-word;
+  white-space: normal;
+  font-size: 14px;
+}
+
+.attachment-file-hint {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: rgba(100, 116, 139, 0.8);
+}
+
+.attachments-enlarged-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 2180;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.attachments-enlarged-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.attachments-enlarged-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 2181;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.attachments-enlarged-close:hover {
+  background: white;
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.attachments-enlarged-video {
+  border-radius: 8px;
+  background: #000;
+  max-height: 90vh;
+  max-width: 90vw;
+}
+
+.attachments-enlarged-file {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.attachments-enlarged-file h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--cf-text);
+}
+
+.attachments-enlarged-file p {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(100, 116, 139, 0.8);
+}
+
+.attachments-download-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(102, 126, 234, 0.6));
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.attachments-download-btn:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 1), rgba(102, 126, 234, 0.8));
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
+}
+
+.attachments-download-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
 .alumni-profile-modal .modal-close-btn {
   position: absolute;
   top: 14px;
