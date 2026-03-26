@@ -2,6 +2,14 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const generateToken = (user) => {
+  return jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+};
+
 // REGISTER
 exports.register = async (req, res) => {
   try {
@@ -49,11 +57,7 @@ exports.register = async (req, res) => {
     await user.save();
 
     // Create token for auto-login
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    const token = generateToken(user);
 
     res.status(201).json({
       message: "User registered successfully",
@@ -88,11 +92,7 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    const token = generateToken(user);
 
     res.json({
       message: "Login successful",
@@ -105,5 +105,57 @@ exports.login = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// ADMIN LOGIN
+exports.adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user || user.role !== "admin") {
+      return res.status(401).json({ message: "Invalid admin credentials" });
+    }
+
+    let isMatch = false;
+
+    // Support legacy plaintext admin passwords and auto-upgrade them to bcrypt.
+    if (typeof user.password === "string" && user.password.startsWith("$2")) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      isMatch = password === user.password;
+      if (isMatch) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        await User.updateOne(
+          { _id: user._id },
+          { $set: { password: hashedPassword } }
+        ).catch(() => {});
+      }
+    }
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid admin credentials" });
+    }
+
+    const token = generateToken(user);
+
+    res.json({
+      message: "Admin login successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Admin login failed" });
   }
 };

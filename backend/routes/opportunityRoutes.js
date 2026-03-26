@@ -4,7 +4,10 @@ const router = express.Router();
 const {
   createOpportunity,
   getAllOpportunities,
-  applyOpportunity
+  applyOpportunity,
+  getAllOpportunitiesForAdmin,
+  updateOpportunityStatusByAdmin,
+  deleteOpportunityByAdmin
 } = require("../controllers/opportunityController");
 const Opportunity = require("../models/Opportunity");
 
@@ -21,13 +24,21 @@ router.get("/", auth, role("student"), getAllOpportunities);
 // Apply to opportunity (Student)
 router.post("/apply/:id", auth, role("student"), applyOpportunity);
 
+// Admin manage opportunities
+router.get("/admin/all", auth, role("admin"), getAllOpportunitiesForAdmin);
+router.patch("/admin/:id/status", auth, role("admin"), updateOpportunityStatusByAdmin);
+router.delete("/admin/:id", auth, role("admin"), deleteOpportunityByAdmin);
+
 
 
 // GET opportunities student has applied to
 router.get("/applied", auth, role("student"), async (req, res) => {
   try {
     // Handle mixed historical applicant formats (ObjectId/string/object)
-    const allJobs = await Opportunity.find({ applicants: { $exists: true, $ne: [] } }).populate(
+    const allJobs = await Opportunity.find({
+      applicants: { $exists: true, $ne: [] },
+      status: "approved"
+    }).populate(
       "postedBy",
       "name email"
     );

@@ -33,12 +33,16 @@ exports.createOpportunity = async (req, res) => {
       responsibilities: parseCSV(responsibilities),
       requiredSkills: parseCSV(requiredSkills),
       preferredSkills: parseCSV(preferredSkills),
-      postedBy: req.user.id
+      postedBy: req.user.id,
+      status: "pending"
     });
 
     await opportunity.save();
 
-    res.status(201).json(opportunity);
+    res.status(201).json({
+      message: "Opportunity submitted for admin approval",
+      opportunity
+    });
 
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -48,7 +52,7 @@ exports.createOpportunity = async (req, res) => {
 // Get All Opportunities
 exports.getAllOpportunities = async (req, res) => {
   try {
-    const opportunities = await Opportunity.find().populate(
+    const opportunities = await Opportunity.find({ status: "approved" }).populate(
       "postedBy",
       "name email"
     );
@@ -68,6 +72,10 @@ exports.applyOpportunity = async (req, res) => {
     if (!opportunity)
       return res.status(404).json({ message: "Opportunity not found" });
 
+    if (opportunity.status !== "approved") {
+      return res.status(400).json({ message: "Only approved opportunities can be applied to" });
+    }
+
     // ✅ Correct duplicate check
     const alreadyApplied = opportunity.applicants.some(
       (applicantId) => applicantId.toString() === req.user.id
@@ -86,5 +94,59 @@ exports.applyOpportunity = async (req, res) => {
   } catch (error) {
     console.log(error); // helpful for debugging
     res.status(500).json({ message: error.message });
+  }
+};
+
+// Admin: list opportunities for management
+exports.getAllOpportunitiesForAdmin = async (req, res) => {
+  try {
+    const opportunities = await Opportunity.find()
+      .populate("postedBy", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json(opportunities);
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Failed to fetch opportunities" });
+  }
+};
+
+// Admin: approve/reject opportunity
+exports.updateOpportunityStatusByAdmin = async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+
+    const opportunity = await Opportunity.findByIdAndUpdate(
+      req.params.id,
+      { $set: { status } },
+      { new: true }
+    ).populate("postedBy", "name email");
+
+    if (!opportunity) {
+      return res.status(404).json({ message: "Opportunity not found" });
+    }
+
+    res.json({ message: `Opportunity ${status} successfully`, opportunity });
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Failed to update opportunity status" });
+  }
+};
+
+// Admin: delete opportunity
+exports.deleteOpportunityByAdmin = async (req, res) => {
+  try {
+    const opportunity = await Opportunity.findById(req.params.id);
+
+    if (!opportunity) {
+      return res.status(404).json({ message: "Opportunity not found" });
+    }
+
+    await opportunity.deleteOne();
+    res.json({ message: "Opportunity deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Failed to delete opportunity" });
   }
 };

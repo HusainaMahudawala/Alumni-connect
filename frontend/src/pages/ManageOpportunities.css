@@ -1,0 +1,152 @@
+.manage-opportunities-page {
+  min-height: 100vh;
+  background: #f5f7fb;
+  padding: 24px;
+}
+
+.manage-opportunities-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.manage-opportunities-header h1 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.manage-opportunities-header p {
+  margin: 6px 0 0;
+  color: #475569;
+}
+
+.manage-opportunities-header button {
+  border: none;
+  background: #0f766e;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.manage-opportunities-header button:hover {
+  background: #115e59;
+}
+
+.manage-opportunities-error {
+  margin-bottom: 14px;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  background: #fee2e2;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.manage-opportunities-loading {
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.manage-opportunities-table-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.manage-opportunities-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.manage-opportunities-table th,
+.manage-opportunities-table td {
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 14px;
+  vertical-align: middle;
+}
+
+.manage-opportunities-table th {
+  font-size: 0.85rem;
+  color: #334155;
+  background: #f8fafc;
+}
+
+.status {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status.approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.action-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.action-btn.approve {
+  background: #16a34a;
+}
+
+.action-btn.approve:hover:enabled {
+  background: #15803d;
+}
+
+.action-btn.reject {
+  background: #f59e0b;
+}
+
+.action-btn.reject:hover:enabled {
+  background: #d97706;
+}
+
+.action-btn.delete {
+  background: #dc2626;
+}
+
+.action-btn.delete:hover:enabled {
+  background: #b91c1c;
+}
+
+.empty-row {
+  text-align: center;
+  color: #64748b;
+}

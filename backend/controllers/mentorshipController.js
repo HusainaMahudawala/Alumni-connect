@@ -107,3 +107,17 @@ exports.approvedMentorships = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Admin views all mentorship requests
+exports.adminAllMentorshipRequests = async (req, res) => {
+  try {
+    const requests = await Mentorship.find({})
+      .populate("student", "name email")
+      .populate("alumni", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json(requests);
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Failed to fetch mentorship requests" });
+  }
+};

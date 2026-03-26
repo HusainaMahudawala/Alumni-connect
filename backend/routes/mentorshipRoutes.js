@@ -11,7 +11,8 @@ const {
   viewRequests,
   updateStatus,
   myMentorships,
-  approvedMentorships
+  approvedMentorships,
+  adminAllMentorshipRequests
 } = require("../controllers/mentorshipController");
 // Student sends mentorship request
 router.post(
@@ -72,6 +73,9 @@ router.get(
   role("alumni"),
   approvedMentorships
 );
+
+// Admin
+router.get("/admin/all", auth, role("admin"), adminAllMentorshipRequests);
 
 
 

@@ -1,6 +1,8 @@
 const Opportunity = require("../models/Opportunity");
 const Mentorship = require("../models/Mentorship");
 const User = require("../models/User");
+const Post = require("../models/Post");
+const Message = require("../models/Message");
 
 // Student Dashboard
 
@@ -29,7 +31,7 @@ exports.studentDashboard = async (req, res) => {
       (m) => m.status === "rejected"
     ).length;
 
-    const availableOpportunities = await Opportunity.countDocuments({});
+    const availableOpportunities = await Opportunity.countDocuments({ status: "approved" });
 
     res.json({
       _id: user._id,
@@ -73,5 +75,46 @@ exports.alumniDashboard = async (req, res) => {
 
   } catch (e) {
     res.status(500).json({ message: e.message });
+  }
+};
+
+// Admin Dashboard
+exports.adminDashboard = async (req, res) => {
+  try {
+    const [
+      totalUsers,
+      totalStudents,
+      totalAlumni,
+      totalAdmins,
+      totalOpportunities,
+      pendingOpportunities,
+      totalMentorshipRequests,
+      totalPosts,
+      totalMessages
+    ] = await Promise.all([
+      User.countDocuments({}),
+      User.countDocuments({ role: "student" }),
+      User.countDocuments({ role: "alumni" }),
+      User.countDocuments({ role: "admin" }),
+      Opportunity.countDocuments({}),
+      Opportunity.countDocuments({ status: "pending" }),
+      Mentorship.countDocuments({}),
+      Post.countDocuments({}),
+      Message.countDocuments({})
+    ]);
+
+    res.json({
+      totalUsers,
+      totalStudents,
+      totalAlumni,
+      totalAdmins,
+      totalOpportunities,
+      pendingOpportunities,
+      totalMentorshipRequests,
+      totalPosts,
+      totalMessages
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Failed to load admin dashboard" });
   }
 };

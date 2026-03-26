@@ -39,7 +39,7 @@ function PostOpportunity() {
         }
       );
 
-      alert("Opportunity posted successfully!");
+      alert("Opportunity submitted and is pending admin approval.");
     } catch (err) {
       alert(err.response?.data?.message || "Error posting opportunity");
     }

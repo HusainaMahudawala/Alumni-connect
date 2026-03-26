@@ -1,0 +1,82 @@
+.manage-users-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.manage-users-header h1 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.manage-users-header select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.manage-users-error {
+  margin-bottom: 14px;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  background: #fee2e2;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.manage-users-loading {
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.manage-users-table-wrap {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: auto;
+}
+
+.manage-users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.manage-users-table th,
+.manage-users-table td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.manage-users-table th {
+  color: #334155;
+  background: #f8fafc;
+  font-size: 0.85rem;
+}
+
+.delete-user-btn {
+  border: none;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #fff;
+  padding: 7px 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delete-user-btn:hover {
+  background: #b91c1c;
+}
+
+.protected-label {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.empty-row {
+  text-align: center;
+  color: #64748b;
+}

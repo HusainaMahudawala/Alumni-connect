@@ -1,5 +1,45 @@
 const User = require('../models/User');
 
+// Admin: list users with optional role filter
+exports.adminGetUsers = async (req, res) => {
+  try {
+    const role = req.query.role;
+    const query = {};
+
+    if (role && ["student", "alumni", "admin"].includes(role)) {
+      query.role = role;
+    }
+
+    const users = await User.find(query)
+      .select("name email phone role company experience createdAt")
+      .sort({ createdAt: -1 });
+
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Failed to fetch users" });
+  }
+};
+
+// Admin: delete a user (student/alumni)
+exports.adminDeleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.role === "admin") {
+      return res.status(403).json({ message: "Admin users cannot be deleted" });
+    }
+
+    await user.deleteOne();
+    res.json({ message: "User deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Failed to delete user" });
+  }
+};
+
 // Get alumni recommendations based on student interests and skills
 exports.getRecommendedAlumni = async (req, res) => {
   try {

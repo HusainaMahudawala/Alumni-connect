@@ -101,7 +101,7 @@ function MyOpportunities() {
       setPostModal(false);
       setPostForm(emptyPost);
       fetchJobs();
-      showToast("Opportunity posted successfully!");
+      showToast("Opportunity submitted and is pending admin approval.");
     } catch {
       showToast("Failed to post opportunity.", "error");
     } finally {
@@ -118,6 +118,17 @@ function MyOpportunities() {
 
   const displayName = user?.name || "Alumni";
   const displayEmail = user?.email || "alumni@portal.com";
+
+  const normalizeStatus = (status) => {
+    const safe = (status || "pending").toLowerCase();
+    if (["pending", "approved", "rejected"].includes(safe)) return safe;
+    return "pending";
+  };
+
+  const statusLabel = (status) => {
+    const safe = normalizeStatus(status);
+    return safe.charAt(0).toUpperCase() + safe.slice(1);
+  };
 
   return (
     <div className="myopp-dashboard">
@@ -217,7 +228,12 @@ function MyOpportunities() {
                     <div className="mopp-card-left">
                       <div className="mopp-card-avatar">{job.company?.charAt(0).toUpperCase() || "J"}</div>
                       <div className="mopp-card-body">
-                        <h3>{job.title}</h3>
+                        <div className="mopp-title-row">
+                          <h3>{job.title}</h3>
+                          <span className={`mopp-status-badge ${normalizeStatus(job.status)}`}>
+                            {statusLabel(job.status)}
+                          </span>
+                        </div>
                         <p className="mopp-company">{job.company}</p>
                         <div className="mopp-tags">
                           {job.location && <span className="mopp-tag">📍 {job.location}</span>}

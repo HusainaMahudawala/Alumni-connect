@@ -46,6 +46,12 @@ const opportunitySchema = new mongoose.Schema(
 
     preferredSkills: [String],
 
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending"
+    },
+
     applicants: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "User",
