@@ -7,7 +7,10 @@ const {
   applyOpportunity,
   getAllOpportunitiesForAdmin,
   updateOpportunityStatusByAdmin,
-  deleteOpportunityByAdmin
+  deleteOpportunityByAdmin,
+  reportOpportunity,
+  getOpportunityReportsForAdmin,
+  reviewOpportunityReportByAdmin
 } = require("../controllers/opportunityController");
 const Opportunity = require("../models/Opportunity");
 
@@ -24,10 +27,15 @@ router.get("/", auth, role("student"), getAllOpportunities);
 // Apply to opportunity (Student)
 router.post("/apply/:id", auth, role("student"), applyOpportunity);
 
+// Report opportunity (Student)
+router.post("/report/:id", auth, role("student"), reportOpportunity);
+
 // Admin manage opportunities
 router.get("/admin/all", auth, role("admin"), getAllOpportunitiesForAdmin);
 router.patch("/admin/:id/status", auth, role("admin"), updateOpportunityStatusByAdmin);
 router.delete("/admin/:id", auth, role("admin"), deleteOpportunityByAdmin);
+router.get("/admin/reports", auth, role("admin"), getOpportunityReportsForAdmin);
+router.patch("/admin/reports/:reportId/review", auth, role("admin"), reviewOpportunityReportByAdmin);
 
 
 

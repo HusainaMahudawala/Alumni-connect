@@ -21,6 +21,9 @@ function StudentOpportunities() {
   });
   const [savingJob, setSavingJob] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [reportingJob, setReportingJob] = useState(null);
+  const [reportReason, setReportReason] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
   const menuRef = React.useRef(null);
 
   // close dropdown when clicking outside
@@ -98,6 +101,38 @@ function StudentOpportunities() {
       const msg = error.response?.data?.message;
       setNotification({ type: "error", text: msg || "Something went wrong" });
       setConfirming(null);
+    }
+  };
+
+  const submitReport = async () => {
+    if (!reportingJob?._id) return;
+
+    if (!reportReason.trim()) {
+      setNotification({ type: "error", text: "Please enter a reason before submitting." });
+      return;
+    }
+
+    try {
+      setReportSubmitting(true);
+      const token = localStorage.getItem("token");
+
+      const res = await axios.post(
+        `http://localhost:5000/api/opportunity/report/${reportingJob._id}`,
+        { reason: reportReason.trim() },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      setNotification({ type: "success", text: res.data.message || "Report submitted. Admin will review it." });
+      setReportingJob(null);
+      setReportReason("");
+    } catch (error) {
+      setNotification({ type: "error", text: error.response?.data?.message || "Failed to submit report" });
+    } finally {
+      setReportSubmitting(false);
     }
   };
 
@@ -437,7 +472,8 @@ function StudentOpportunities() {
                           className="dropdown-item danger"
                           onClick={() => {
                             setMenuOpen(false);
-                            setNotification({ type: "error", text: "Report submitted. We will review this job." });
+                            setReportingJob(selectedJob);
+                            setReportReason("");
                           }}
                         >
                           <span className="dropdown-icon">🚩</span> Report this job
@@ -611,6 +647,46 @@ function StudentOpportunities() {
                 onClick={() => applyOpportunity(confirming._id)}
               >
                 Yes, Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Job Modal */}
+      {reportingJob && (
+        <div className="modal-overlay" onClick={() => { setReportingJob(null); setReportReason(""); }}>
+          <div className="confirm-modal report-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Report Opportunity</h2>
+            <p>
+              Tell us why you are reporting <strong>{reportingJob.title}</strong> at <strong>{reportingJob.company}</strong>.
+            </p>
+            <textarea
+              className="report-reason-input"
+              placeholder="Enter reason for report..."
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              rows={5}
+              maxLength={1000}
+            />
+            <div className="report-char-count">{reportReason.length}/1000</div>
+            <div className="modal-actions">
+              <button
+                className="cancel-btn"
+                onClick={() => {
+                  setReportingJob(null);
+                  setReportReason("");
+                }}
+                disabled={reportSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                className="confirm-btn report-btn"
+                onClick={submitReport}
+                disabled={reportSubmitting}
+              >
+                {reportSubmitting ? "Submitting..." : "Submit Report"}
               </button>
             </div>
           </div>

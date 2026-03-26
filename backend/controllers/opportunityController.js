@@ -1,4 +1,5 @@
 const Opportunity = require("../models/Opportunity");
+const OpportunityReport = require("../models/OpportunityReport");
 
 // Create Opportunity
 exports.createOpportunity = async (req, res) => {
@@ -148,5 +149,114 @@ exports.deleteOpportunityByAdmin = async (req, res) => {
     res.json({ message: "Opportunity deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message || "Failed to delete opportunity" });
+  }
+};
+
+// Student: report an opportunity with reason
+exports.reportOpportunity = async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ message: "Reason is required" });
+    }
+
+    const opportunity = await Opportunity.findById(req.params.id);
+    if (!opportunity) {
+      return res.status(404).json({ message: "Opportunity not found" });
+    }
+
+    const existingPendingReport = await OpportunityReport.findOne({
+      opportunity: opportunity._id,
+      reportedBy: req.user.id,
+      status: "pending"
+    });
+
+    if (existingPendingReport) {
+      return res.status(400).json({ message: "You have already reported this opportunity" });
+    }
+
+    const report = await OpportunityReport.create({
+      opportunity: opportunity._id,
+      reportedBy: req.user.id,
+      reason: reason.trim()
+    });
+
+    res.status(201).json({
+      message: "Report submitted successfully",
+      report
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Failed to submit report" });
+  }
+};
+
+// Admin: list opportunity reports
+exports.getOpportunityReportsForAdmin = async (req, res) => {
+  try {
+    const reports = await OpportunityReport.find({})
+      .populate("opportunity", "title company status")
+      .populate("reportedBy", "name email")
+      .populate("reviewedBy", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json(reports);
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Failed to fetch reports" });
+  }
+};
+
+// Admin: review report and take action on opportunity
+exports.reviewOpportunityReportByAdmin = async (req, res) => {
+  try {
+    const { decision } = req.body;
+
+    if (!["approved", "rejected"].includes(decision)) {
+      return res.status(400).json({ message: "Invalid decision value" });
+    }
+
+    const report = await OpportunityReport.findById(req.params.reportId);
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+
+    if (report.status !== "pending") {
+      return res.status(400).json({ message: "This report has already been reviewed" });
+    }
+
+    const opportunity = await Opportunity.findById(report.opportunity);
+    if (!opportunity) {
+      return res.status(404).json({ message: "Related opportunity not found" });
+    }
+
+    opportunity.status = decision;
+    await opportunity.save();
+
+    const reviewedAt = new Date();
+
+    await OpportunityReport.updateMany(
+      { opportunity: report.opportunity, status: "pending" },
+      {
+        $set: {
+          status: "reviewed",
+          reviewDecision: decision,
+          reviewedBy: req.user.id,
+          reviewedAt
+        }
+      }
+    );
+
+    const updatedReport = await OpportunityReport.findById(report._id)
+      .populate("opportunity", "title company status")
+      .populate("reportedBy", "name email")
+      .populate("reviewedBy", "name email");
+
+    res.json({
+      message: `Report reviewed and opportunity ${decision}`,
+      report: updatedReport,
+      opportunity
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Failed to review report" });
   }
 };

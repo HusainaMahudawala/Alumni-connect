@@ -3,6 +3,7 @@ const Mentorship = require("../models/Mentorship");
 const User = require("../models/User");
 const Post = require("../models/Post");
 const Message = require("../models/Message");
+const OpportunityReport = require("../models/OpportunityReport");
 
 // Student Dashboard
 
@@ -88,6 +89,7 @@ exports.adminDashboard = async (req, res) => {
       totalAdmins,
       totalOpportunities,
       pendingOpportunities,
+      pendingOpportunityReports,
       totalMentorshipRequests,
       totalPosts,
       totalMessages
@@ -98,10 +100,17 @@ exports.adminDashboard = async (req, res) => {
       User.countDocuments({ role: "admin" }),
       Opportunity.countDocuments({}),
       Opportunity.countDocuments({ status: "pending" }),
+      OpportunityReport.countDocuments({ status: "pending" }),
       Mentorship.countDocuments({}),
       Post.countDocuments({}),
       Message.countDocuments({})
     ]);
+
+    const recentOpportunityReports = await OpportunityReport.find({})
+      .populate("opportunity", "title company status")
+      .populate("reportedBy", "name email")
+      .sort({ createdAt: -1 })
+      .limit(10);
 
     res.json({
       totalUsers,
@@ -110,9 +119,11 @@ exports.adminDashboard = async (req, res) => {
       totalAdmins,
       totalOpportunities,
       pendingOpportunities,
+      pendingOpportunityReports,
       totalMentorshipRequests,
       totalPosts,
-      totalMessages
+      totalMessages,
+      recentOpportunityReports
     });
   } catch (error) {
     res.status(500).json({ message: error.message || "Failed to load admin dashboard" });
