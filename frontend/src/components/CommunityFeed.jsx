@@ -47,6 +47,23 @@ const CommunityFeed = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const pending = localStorage.getItem("pendingChatRecipient");
+    if (!pending) return;
+
+    try {
+      const recipient = JSON.parse(pending);
+      if (recipient && recipient._id) {
+        setMessageRecipient(recipient);
+        setShowMessageModal(true);
+      }
+    } catch (err) {
+      console.error("Failed to parse pending chat recipient:", err);
+    } finally {
+      localStorage.removeItem("pendingChatRecipient");
+    }
+  }, []);
+
   // Ensure userId is in localStorage whenever userData changes
   useEffect(() => {
     if (userData?._id) {

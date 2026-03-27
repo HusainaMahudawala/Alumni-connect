@@ -305,6 +305,18 @@
   box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
 }
 
+.btn-chat {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.35);
+}
+
+.btn-chat:hover {
+  background: linear-gradient(135deg, #22b8f0 0%, #0a96d3 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(14, 165, 233, 0.45);
+}
+
 .btn-delete {
   background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
   color: white;
@@ -315,6 +327,85 @@
   background: linear-gradient(135deg, #ffaa22 0%, #f68d00 100%);
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(255, 152, 0, 0.4);
+}
+
+.notif-chat-modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.notif-chat-modal {
+  width: 100%;
+  max-width: 520px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.2);
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.notif-chat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.notif-chat-head h4 {
+  margin: 0;
+  color: #111827;
+  font-size: 16px;
+}
+
+.notif-chat-head button {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  padding: 5px 8px;
+}
+
+.notif-chat-input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.notif-chat-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.notif-chat-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.notif-chat-actions button {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  background: #fff;
+  font-weight: 700;
+  color: #111827;
+}
+
+.notif-chat-actions .primary {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
 }
 
 /* Mobile Responsive */

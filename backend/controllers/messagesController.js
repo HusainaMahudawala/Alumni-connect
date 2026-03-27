@@ -1,5 +1,6 @@
 const Message = require("../models/Message");
 const User = require("../models/User");
+const notificationController = require("./notificationController");
 
 // Send a message
 exports.sendMessage = async (req, res) => {
@@ -12,6 +13,10 @@ exports.sendMessage = async (req, res) => {
     // Validate input
     if (!recipientId || !content) {
       return res.status(400).json({ message: "Recipient ID and content are required" });
+    }
+
+    if (String(recipientId) === String(senderId)) {
+      return res.status(400).json({ message: "You cannot send a message to yourself" });
     }
 
     // Check if recipient exists
@@ -38,6 +43,16 @@ exports.sendMessage = async (req, res) => {
 
     await message.save();
     console.log("Message saved successfully:", message._id);
+
+    await notificationController.createNotificationHelper(
+      recipientId,
+      "message_received",
+      `New message from ${sender.name}`,
+      {
+        fromUserId: senderId,
+        fromUserName: sender.name
+      }
+    );
 
     res.status(201).json({ 
       message: "Message sent successfully",

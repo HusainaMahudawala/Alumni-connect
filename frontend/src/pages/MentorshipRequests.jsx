@@ -116,19 +116,23 @@ function MentorshipRequests() {
               <button
                 type="button"
                 onClick={() => navigate("/alumni-dashboard")}
-                className="sidebar-menu-item"
+                className={`sidebar-menu-item ${location.pathname === "/alumni-dashboard" ? "active" : ""}`}
               >
                 <span>📊</span>
                 Dashboard
               </button>
-              <button type="button" className="sidebar-menu-item muted">
+              <button
+                type="button"
+                onClick={() => navigate("/alumni-directory")}
+                className="sidebar-menu-item"
+              >
                 <span>👥</span>
                 Alumni Directory
               </button>
               <button
                 type="button"
                 onClick={() => navigate("/my-opportunities")}
-                className="sidebar-menu-item"
+                className={`sidebar-menu-item ${location.pathname === "/my-opportunities" ? "active" : ""}`}
               >
                 <span>💼</span>
                 Jobs Board

@@ -241,7 +241,11 @@ function AlumniDashboard() {
                 <span>📊</span>
                 Dashboard
               </button>
-              <button type="button" className="sidebar-menu-item muted">
+              <button
+                type="button"
+                onClick={() => navigate("/alumni-directory")}
+                className="sidebar-menu-item"
+              >
                 <span>👥</span>
                 Alumni Directory
               </button>
@@ -252,6 +256,14 @@ function AlumniDashboard() {
               >
                 <span>💼</span>
                 Jobs Board
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/alumni-profile/edit")}
+                className="sidebar-menu-item"
+              >
+                <span>✍</span>
+                Edit Profile
               </button>
               <button type="button" className="sidebar-menu-item muted">
                 <span>🗣</span>

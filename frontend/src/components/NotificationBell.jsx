@@ -6,6 +6,9 @@ const NotificationBell = ({ onApproveClick }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatRecipient, setChatRecipient] = useState(null);
+  const [chatText, setChatText] = useState("");
   const dropdownRef = useRef(null);
   const bellRef = useRef(null);
 
@@ -109,6 +112,66 @@ const NotificationBell = ({ onApproveClick }) => {
     }
   };
 
+  const handleOpenChat = (notification) => {
+    const recipientId = notification?.data?.fromUserId;
+    if (!recipientId) {
+      return;
+    }
+
+    const payload = {
+      _id: recipientId,
+      name: notification?.data?.fromUserName || "Alumni",
+      company: "Professional"
+    };
+
+    setChatRecipient(payload);
+    setChatText("");
+    setShowChatModal(true);
+  };
+
+  const handleSendChat = async () => {
+    if (!chatRecipient?._id || !chatText.trim()) return;
+
+    let currentUserId = "";
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "null");
+      currentUserId = user?.id || user?._id || localStorage.getItem("userId") || "";
+    } catch {
+      currentUserId = localStorage.getItem("userId") || "";
+    }
+
+    if (currentUserId && String(chatRecipient._id) === String(currentUserId)) {
+      alert("Cannot send message to your own account.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/api/messages/send`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          recipientId: chatRecipient._id,
+          content: chatText.trim()
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to send message");
+      }
+
+      setShowChatModal(false);
+      setChatRecipient(null);
+      setChatText("");
+    } catch (error) {
+      console.error("Error sending chat message:", error);
+      alert(error.message || "Failed to send message");
+    }
+  };
+
   const handleReject = async (notification) => {
     try {
       const mentorshipId = notification.data.mentorshipId;
@@ -147,6 +210,9 @@ const NotificationBell = ({ onApproveClick }) => {
       case "mentorship_approved": return "✅";
       case "mentorship_rejected": return "❌";
       case "job_applied": return "💼";
+      case "connect_request": return "💬";
+      case "collaboration_offer": return "🚀";
+      case "message_received": return "📨";
       default: return "📢";
     }
   };
@@ -264,6 +330,16 @@ const NotificationBell = ({ onApproveClick }) => {
                       </>
                     )}
 
+                    {(notif.type === "connect_request" || notif.type === "collaboration_offer" || notif.type === "message_received") && (
+                      <button
+                        className="btn-chat"
+                        onClick={() => handleOpenChat(notif)}
+                        title="Open chat"
+                      >
+                        💬
+                      </button>
+                    )}
+
                     {!notif.isRead && (
                       <button
                         className="btn-read"
@@ -285,6 +361,30 @@ const NotificationBell = ({ onApproveClick }) => {
                 </div>
               ))
             )}
+          </div>
+        </div>
+      )}
+
+      {showChatModal && chatRecipient && (
+        <div className="notif-chat-modal-bg" onClick={() => setShowChatModal(false)}>
+          <div className="notif-chat-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="notif-chat-head">
+              <h4>Message to {chatRecipient.name}</h4>
+              <button type="button" onClick={() => setShowChatModal(false)}>✕</button>
+            </div>
+
+            <textarea
+              className="notif-chat-input"
+              rows={5}
+              placeholder="Type your message..."
+              value={chatText}
+              onChange={(e) => setChatText(e.target.value)}
+            />
+
+            <div className="notif-chat-actions">
+              <button type="button" onClick={() => setShowChatModal(false)}>Cancel</button>
+              <button type="button" className="primary" onClick={handleSendChat}>Send</button>
+            </div>
           </div>
         </div>
       )}

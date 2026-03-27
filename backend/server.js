@@ -19,6 +19,7 @@ app.use("/api/opportunity", require("./routes/opportunityRoutes"));
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/posts", require("./routes/postRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/alumni", require("./routes/alumniRoutes"));
 app.use("/api/messages", require("./routes/messagesRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 mongoose.connect(process.env.MONGO_URI)

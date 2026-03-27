@@ -14,7 +14,10 @@ const notificationSchema = new mongoose.Schema(
         "mentorship_request",
         "mentorship_approved",
         "mentorship_rejected",
-        "job_applied"
+        "job_applied",
+        "connect_request",
+        "collaboration_offer",
+        "message_received"
       ],
       required: true
     },

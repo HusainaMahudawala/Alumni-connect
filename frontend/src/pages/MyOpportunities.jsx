@@ -159,7 +159,11 @@ function MyOpportunities() {
                 <span>📊</span>
                 Dashboard
               </button>
-              <button type="button" className="sidebar-menu-item muted">
+              <button
+                type="button"
+                onClick={() => navigate("/alumni-directory")}
+                className="sidebar-menu-item"
+              >
                 <span>👥</span>
                 Alumni Directory
               </button>

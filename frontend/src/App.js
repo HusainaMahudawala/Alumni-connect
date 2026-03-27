@@ -17,6 +17,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ManageOpportunities from "./pages/ManageOpportunities";
 import ManageUsers from "./pages/ManageUsers";
 import AdminMentorshipRequests from "./pages/AdminMentorshipRequests";
+import AlumniDirectory from "./pages/AlumniDirectory";
+import AlumniProfile from "./pages/AlumniProfile";
+import EditAlumniProfile from "./pages/EditAlumniProfile";
 function App() {
   return (
     <Router>
@@ -51,6 +54,30 @@ function App() {
         />
         <Route path="/mentorship" element={<Mentorship />} />
         <Route path="/alumni-dashboard" element={<AlumniDashboard />} />
+        <Route
+          path="/alumni-directory"
+          element={
+            <ProtectedRoute allowedRoles={["alumni"]}>
+              <AlumniDirectory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/alumni-directory/:id"
+          element={
+            <ProtectedRoute allowedRoles={["alumni"]}>
+              <AlumniProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/alumni-profile/edit"
+          element={
+            <ProtectedRoute allowedRoles={["alumni"]}>
+              <EditAlumniProfile />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/post-opportunity" element={<PostOpportunity />} />
         <Route path="/my-opportunities" element={<MyOpportunities />} />
         <Route
