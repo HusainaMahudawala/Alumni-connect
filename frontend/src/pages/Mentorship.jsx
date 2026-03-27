@@ -35,6 +35,14 @@ function Mentorship() {
     fetchUserData();
   }, []);
 
+  // 🔄 Refresh data when navigating to this page
+  useEffect(() => {
+    if (location.pathname === "/mentorship") {
+      fetchAlumni();
+      fetchMyRequests();
+    }
+  }, [location.pathname]);
+
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -93,7 +101,9 @@ function Mentorship() {
       );
 
       setNotification({ type: "success", text: "Mentorship request sent!" });
+      // Refresh both requests and alumni list to show updated slot counts
       fetchMyRequests();
+      fetchAlumni();
     } catch (error) {
       setNotification({
         type: "error",
@@ -104,7 +114,7 @@ function Mentorship() {
 
   const checkStatus = (alumniId) => {
     const found = myRequests.find(
-      (req) => req.alumni._id === alumniId
+      (req) => req.alumni._id === alumniId && req.status === "pending"
     );
     return found ? found.status : null;
   };

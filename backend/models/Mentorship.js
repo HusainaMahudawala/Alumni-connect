@@ -27,6 +27,18 @@ const mentorshipSchema = new mongoose.Schema(
 
     scheduledTime: {
       type: Date
+    },
+
+    meetingLink: {
+      type: String
+    },
+
+    meetingDate: {
+      type: Date
+    },
+
+    meetingLocation: {
+      type: String
     }
   },
   { timestamps: true }

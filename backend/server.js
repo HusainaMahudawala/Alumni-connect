@@ -20,6 +20,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/posts", require("./routes/postRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/messages", require("./routes/messagesRoutes"));
+app.use("/api/notifications", require("./routes/notificationRoutes"));
 mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.log(err));

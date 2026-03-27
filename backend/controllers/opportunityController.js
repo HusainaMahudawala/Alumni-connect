@@ -1,5 +1,7 @@
 const Opportunity = require("../models/Opportunity");
 const OpportunityReport = require("../models/OpportunityReport");
+const User = require("../models/User");
+const notificationController = require("./notificationController");
 
 // Create Opportunity
 exports.createOpportunity = async (req, res) => {
@@ -65,10 +67,9 @@ exports.getAllOpportunities = async (req, res) => {
 };
 
 // Apply to Opportunity
-// Apply to Opportunity
 exports.applyOpportunity = async (req, res) => {
   try {
-    const opportunity = await Opportunity.findById(req.params.id);
+    const opportunity = await Opportunity.findById(req.params.id).populate("postedBy", "name");
 
     if (!opportunity)
       return res.status(404).json({ message: "Opportunity not found" });
@@ -85,10 +86,25 @@ exports.applyOpportunity = async (req, res) => {
     if (alreadyApplied)
       return res.status(400).json({ message: "Already applied" });
 
+    const student = await User.findById(req.user.id).select("name");
+
     // ✅ Push only user id (NOT object)
     opportunity.applicants.push(req.user.id);
 
     await opportunity.save();
+
+    // 🔔 CREATE NOTIFICATION FOR ALUMNI/POSTER
+    await notificationController.createNotificationHelper(
+      opportunity.postedBy._id,
+      "job_applied",
+      `${student.name} applied for "${opportunity.title}"`,
+      {
+        jobId: opportunity._id,
+        jobTitle: opportunity.title,
+        fromUserId: req.user.id,
+        fromUserName: student.name
+      }
+    );
 
     res.json({ message: "Applied successfully" });
 

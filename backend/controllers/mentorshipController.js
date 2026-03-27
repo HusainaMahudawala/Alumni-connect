@@ -1,5 +1,7 @@
 const Mentorship = require("../models/Mentorship");
 const User = require("../models/User");
+const Notification = require("../models/Notification");
+const notificationController = require("./notificationController");
 
 // Student sends mentorship request
 exports.applyMentorship = async (req, res) => {
@@ -12,13 +14,15 @@ exports.applyMentorship = async (req, res) => {
 
     const existing = await Mentorship.findOne({
       student: req.user.id,
-      alumni: alumniId
+      alumni: alumniId,
+      status: "pending"
     });
 
     if (existing)
       return res.status(400).json({ message: "Already requested" });
 
-    const alumni = await User.findById(alumniId).select("role mentorshipSlots");
+    const alumni = await User.findById(alumniId).select("name role mentorshipSlots");
+    const student = await User.findById(req.user.id).select("name");
 
     if (!alumni || alumni.role !== "alumni") {
       return res.status(404).json({ message: "Alumni not found" });
@@ -38,6 +42,33 @@ exports.applyMentorship = async (req, res) => {
     });
 
     await mentorship.save();
+
+    // � DECREMENT ALUMNI'S MENTORSHIP SLOTS
+    await User.findByIdAndUpdate(
+      alumniId,
+      { $inc: { mentorshipSlots: -1 } },
+      { new: true }
+    );
+
+    // CREATE NOTIFICATION FOR ALUMNI (with deduplication to prevent duplicates)
+    const recentNotif = await Notification.findOne({
+      userId: alumniId,
+      type: "mentorship_request",
+      "data.mentorshipId": mentorship._id
+    });
+
+    if (!recentNotif) {
+      await notificationController.createNotificationHelper(
+        alumniId,
+        "mentorship_request",
+        `New mentorship request from ${student.name}`,
+        {
+          mentorshipId: mentorship._id,
+          fromUserId: req.user.id,
+          fromUserName: student.name
+        }
+      );
+    }
 
     res.status(201).json({ message: "Mentorship request sent" });
 
@@ -62,9 +93,13 @@ exports.viewRequests = async (req, res) => {
 // Alumni updates status (approve / reject)
 exports.updateStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, meetingLink, meetingDate, meetingLocation } = req.body;
 
-    const mentorship = await Mentorship.findById(req.params.id);
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const mentorship = await Mentorship.findById(req.params.id).populate("student", "name");
 
     if (!mentorship) {
       return res.status(404).json({ message: "Request not found" });
@@ -72,9 +107,46 @@ exports.updateStatus = async (req, res) => {
 
     mentorship.status = status;
 
+    // If approved, save meeting details
+    if (status === "approved") {
+      mentorship.meetingLink = meetingLink;
+      mentorship.meetingDate = meetingDate;
+      mentorship.meetingLocation = meetingLocation;
+
+      // 🔔 CREATE NOTIFICATION FOR STUDENT (APPROVED)
+      await notificationController.createNotificationHelper(
+        mentorship.student._id,
+        "mentorship_approved",
+        "Your mentorship request has been approved!",
+        {
+          mentorshipId: mentorship._id,
+          meetingLink: meetingLink,
+          meetingDate: meetingDate,
+          meetingLocation: meetingLocation
+        }
+      );
+    } else if (status === "rejected") {
+      // � RESTORE ALUMNI'S MENTORSHIP SLOT (was decremented on request)
+      await User.findByIdAndUpdate(
+        mentorship.alumni,
+        { $inc: { mentorshipSlots: 1 } },
+        { new: true }
+      );
+
+      // �🔔 CREATE NOTIFICATION FOR STUDENT (REJECTED)
+      await notificationController.createNotificationHelper(
+        mentorship.student._id,
+        "mentorship_rejected",
+        "Your mentorship request was rejected.",
+        {
+          mentorshipId: mentorship._id
+        }
+      );
+    }
+
     await mentorship.save();
 
-    res.json({ message: "Status updated successfully" });
+    res.json({ message: "Status updated successfully", mentorship });
 
   } catch (error) {
     res.status(500).json({ message: error.message });

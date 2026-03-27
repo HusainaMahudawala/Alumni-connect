@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import NotificationBell from "./NotificationBell";
+import ApprovalModal from "./ApprovalModal";
 import "../styles/Navbar.css";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
   const isLoggedIn = !!localStorage.getItem("token");
   const userRole = localStorage.getItem("role");
 
@@ -60,6 +64,12 @@ const Navbar = () => {
             </>
           ) : (
             <div className="user-menu">
+              <NotificationBell
+                onApproveClick={(notification) => {
+                  setSelectedNotification(notification);
+                  setShowApprovalModal(true);
+                }}
+              />
               {userRole === "alumni" ? (
                 <button
                   className="nav-link"
@@ -89,6 +99,25 @@ const Navbar = () => {
           <span></span>
         </div>
       </div>
+
+      {/* Approval Modal */}
+      {showApprovalModal && selectedNotification && (
+        <ApprovalModal
+          notification={selectedNotification}
+          onClose={() => {
+            setShowApprovalModal(false);
+            setSelectedNotification(null);
+          }}
+          onApproveSuccess={() => {
+            setShowApprovalModal(false);
+            setSelectedNotification(null);
+          }}
+          onNotificationResolved={(notificationId) => {
+            // Notification will be deleted from the bell via API call in ApprovalModal
+            // The NotificationBell will auto-refresh in 5 seconds or user can manually refresh
+          }}
+        />
+      )}
     </nav>
   );
 };

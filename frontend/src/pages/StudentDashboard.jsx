@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import StudentStatsGraph from "../components/StudentStatsGraph";
+import NotificationBell from "../components/NotificationBell";
+import ApprovalModal from "../components/ApprovalModal";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./StudentDashboard.css";
@@ -38,6 +40,8 @@ function StudentDashboard() {
   const [approvedModal, setApprovedModal] = useState(false);
   const [approvedList, setApprovedList] = useState([]);
   const [approvedLoading, setApprovedLoading] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
 
   const [internshipModal, setInternshipModal] = useState(false);
   const [internshipList, setInternshipList] = useState([]);
@@ -244,7 +248,12 @@ function StudentDashboard() {
           <div className="search-bar">
             <input type="text" placeholder="Search..." />
           </div>
-          <button className="notification-btn">🔔</button>
+          <NotificationBell
+            onApproveClick={(notification) => {
+              setSelectedNotification(notification);
+              setShowApprovalModal(true);
+            }}
+          />
         </div>
       </nav>
 
@@ -616,6 +625,25 @@ function StudentDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Approval Modal */}
+      {showApprovalModal && selectedNotification && (
+        <ApprovalModal
+          notification={selectedNotification}
+          onClose={() => {
+            setShowApprovalModal(false);
+            setSelectedNotification(null);
+          }}
+          onApproveSuccess={() => {
+            setShowApprovalModal(false);
+            setSelectedNotification(null);
+          }}
+          onNotificationResolved={(notificationId) => {
+            // Notification will be deleted from the bell via API call in ApprovalModal
+            // The NotificationBell will auto-refresh in 5 seconds or user can manually refresh
+          }}
+        />
       )}
     </div>
   );

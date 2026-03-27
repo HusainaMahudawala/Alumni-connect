@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import NotificationBell from "../components/NotificationBell";
+import ApprovalModal from "../components/ApprovalModal";
 import "./AlumniDashboard.css";
 import "./MyOpportunities.css";
 
@@ -54,6 +56,8 @@ function AlumniDashboard() {
   const [postForm, setPostForm] = useState(emptyPost);
   const [posting, setPosting] = useState(false);
   const [toast, setToast] = useState(null);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
 
   const storedUser = useMemo(() => {
     try {
@@ -215,9 +219,12 @@ function AlumniDashboard() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <button className="topbar-notification" type="button" aria-label="Notifications">
-            🔔
-          </button>
+          <NotificationBell
+            onApproveClick={(notification) => {
+              setSelectedNotification(notification);
+              setShowApprovalModal(true);
+            }}
+          />
         </div>
       </header>
 
@@ -530,6 +537,25 @@ function AlumniDashboard() {
       {/* ── Toast ── */}
       {toast && (
         <div className={`mopp-toast ${toast.type}`}>{toast.msg}</div>
+      )}
+
+      {/* Approval Modal */}
+      {showApprovalModal && selectedNotification && (
+        <ApprovalModal
+          notification={selectedNotification}
+          onClose={() => {
+            setShowApprovalModal(false);
+            setSelectedNotification(null);
+          }}
+          onApproveSuccess={() => {
+            setShowApprovalModal(false);
+            setSelectedNotification(null);
+          }}
+          onNotificationResolved={(notificationId) => {
+            // Notification will be deleted from the bell via API call in ApprovalModal
+            // The NotificationBell will auto-refresh in 5 seconds or user can manually refresh
+          }}
+        />
       )}
     </div>
   );

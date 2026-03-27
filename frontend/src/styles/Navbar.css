@@ -77,6 +77,8 @@
   display: flex;
   gap: 15px;
   align-items: center;
+  position: relative;
+  z-index: auto;
 }
 
 .btn-signin {
@@ -136,6 +138,7 @@
   display: flex;
   gap: 15px;
   align-items: center;
+  position: relative;
 }
 
 /* Hamburger Menu */

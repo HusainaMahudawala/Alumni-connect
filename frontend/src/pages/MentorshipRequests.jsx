@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import ApprovalModal from "../components/ApprovalModal";
 import "./MentorshipRequests.css";
 
 function MentorshipRequests() {
@@ -10,6 +11,8 @@ function MentorshipRequests() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
   const token = localStorage.getItem("token");
 
   const storedUser = useMemo(() => {
@@ -44,20 +47,16 @@ function MentorshipRequests() {
   };
 
   const handleApprove = async (id) => {
-    try {
-      await axios.put(
-        `http://localhost:5000/api/mentorship/update/${id}`,
-        { status: "approved" },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      setNotification({ type: "success", text: "Mentorship request approved!" });
-      fetchRequests();
-    } catch (error) {
-      console.error("Error approving request:", error);
-      setNotification({ type: "error", text: "Failed to approve request" });
+    // Open modal to collect meeting details
+    const request = requests.find(r => r._id === id);
+    if (request) {
+      // Transform request to notification format for ApprovalModal
+      setSelectedRequest({
+        _id: `notif_${id}`,
+        data: { mentorshipId: id },
+        message: `Approve mentorship request from ${request.student?.name || 'Student'}`
+      });
+      setShowApprovalModal(true);
     }
   };
 
@@ -295,6 +294,26 @@ function MentorshipRequests() {
             ✕
           </button>
         </div>
+      )}
+
+      {/* Approval Modal */}
+      {showApprovalModal && selectedRequest && (
+        <ApprovalModal
+          notification={selectedRequest}
+          onClose={() => {
+            setShowApprovalModal(false);
+            setSelectedRequest(null);
+          }}
+          onApproveSuccess={() => {
+            setShowApprovalModal(false);
+            setSelectedRequest(null);
+            setNotification({ type: "success", text: "Mentorship request approved!" });
+            fetchRequests();
+          }}
+          onNotificationResolved={() => {
+            // Notification deleted
+          }}
+        />
       )}
     </div>
   );
