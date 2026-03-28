@@ -5,6 +5,7 @@ import CreatePost from "./CreatePost";
 import PostCard from "./PostCard";
 import "../styles/CommunityFeed.css";
 import "../pages/StudentDashboard.css";
+import "../pages/AlumniDashboard.css";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const CommunityFeed = () => {
@@ -310,6 +311,9 @@ const CommunityFeed = () => {
 
   // Get current user ID from either userData or localStorage
   const currentUserId = userData?._id || localStorage.getItem("userId");
+  const userRole = localStorage.getItem("role");
+  const isAlumni = userRole === "alumni";
+  const dashboardPath = isAlumni ? "/alumni-dashboard" : "/student";
   
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -391,11 +395,11 @@ const CommunityFeed = () => {
 
       <nav className="dashboard-navbar">
         <div className="navbar-left">
-          <div className="navbar-logo" onClick={() => handleNavigation("/student")} role="button" tabIndex={0}>
+          <div className="navbar-logo" onClick={() => handleNavigation(dashboardPath)} role="button" tabIndex={0}>
             <span className="logo-icon">🎓</span>
             <div className="logo-text">
               <div className="logo-main">AlumniConnect</div>
-              <div className="logo-sub">Student Portal</div>
+              <div className="logo-sub">{isAlumni ? "Alumni Portal" : "Student Portal"}</div>
             </div>
           </div>
         </div>
@@ -415,81 +419,148 @@ const CommunityFeed = () => {
       </nav>
 
       <div className="main-container">
-        <aside className="sidebar">
-          <div className="sidebar-content">
-            <div className="menu-section">
-              <h4 className="menu-title">MAIN MENU</h4>
-              <nav className="menu-list">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleNavigation("/student");
-                  }}
-                  className={`menu-item ${location.pathname === "/student" ? "active" : ""}`}
+        {isAlumni ? (
+          <aside className="alumni-sidebar">
+            <div className="sidebar-menu-wrap">
+              <p className="sidebar-menu-title">Menu</p>
+              <nav className="sidebar-menu-list">
+                <button
+                  type="button"
+                  onClick={() => navigate("/alumni-dashboard")}
+                  className={`sidebar-menu-item ${location.pathname === "/alumni-dashboard" ? "active" : ""}`}
                 >
-                  <span className="menu-icon">📊</span>
-                  <span>Dashboard</span>
-                </a>
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleNavigation("/opportunity");
-                  }}
-                  className={`menu-item ${location.pathname === "/opportunity" ? "active" : ""}`}
+                  <span>📊</span>
+                  Dashboard
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/alumni-directory")}
+                  className={`sidebar-menu-item ${location.pathname === "/alumni-directory" ? "active" : ""}`}
                 >
-                  <span className="menu-icon">💼</span>
-                  <span>Opportunities</span>
-                </a>
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleNavigation("/mentorship");
-                  }}
-                  className={`menu-item ${location.pathname === "/mentorship" ? "active" : ""}`}
+                  <span>👥</span>
+                  Alumni Directory
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/my-opportunities")}
+                  className={`sidebar-menu-item ${location.pathname === "/my-opportunities" ? "active" : ""}`}
                 >
-                  <span className="menu-icon">🤝</span>
-                  <span>Mentorship</span>
-                </a>
-                <a href="#" className="menu-item" onClick={(e) => e.preventDefault()}>
-                  <span className="menu-icon">📅</span>
-                  <span>Events</span>
-                </a>
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleNavigation("/community");
-                  }}
-                  className={`menu-item ${location.pathname === "/community" ? "active" : ""}`}
+                  <span>💼</span>
+                  Jobs Board
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/community")}
+                  className={`sidebar-menu-item ${location.pathname === "/community" ? "active" : ""}`}
                 >
-                  <span className="menu-icon">💬</span>
-                  <span>Community Feed</span>
-                </a>
+                  <span>🗣</span>
+                  Community Feed
+                </button>
+                <button type="button" className="sidebar-menu-item muted">
+                  <span>📅</span>
+                  Events
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/mentorship-requests")}
+                  className={`sidebar-menu-item ${location.pathname === "/mentorship-requests" ? "active" : ""}`}
+                >
+                  <span>🤝</span>
+                  Mentorship
+                </button>
               </nav>
             </div>
-          </div>
 
-          <div className="sidebar-footer">
-            <div className="user-profile">
-              <div className="user-avatar">
-                {userData?.name?.charAt(0)?.toUpperCase() || "S"}
+            <div className="sidebar-profile">
+              <div className="profile-avatar">{userData?.name?.charAt(0)?.toUpperCase() || "A"}</div>
+              <div>
+                <p className="profile-name">{userData?.name || "Alumni"}</p>
+                <p className="profile-role">Alumni Member</p>
+                <p className="profile-email">{userData?.email || "alumni@portal.com"}</p>
               </div>
-              <div className="user-info">
-                <p className="user-name">{userData?.name || "Student"}</p>
-                <p className="user-role">Student Account</p>
-              </div>
-              <button className="user-menu-btn" type="button" aria-label="User menu">
-                ⋮
-              </button>
             </div>
-            <button className="logout-btn" type="button" onClick={handleLogout}>
+
+            <button className="sidebar-logout" type="button" onClick={handleLogout}>
               Logout
             </button>
-          </div>
-        </aside>
+          </aside>
+        ) : (
+          <aside className="sidebar">
+            <div className="sidebar-content">
+              <div className="menu-section">
+                <h4 className="menu-title">MAIN MENU</h4>
+                <nav className="menu-list">
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleNavigation("/student");
+                    }}
+                    className={`menu-item ${location.pathname === "/student" ? "active" : ""}`}
+                  >
+                    <span className="menu-icon">📊</span>
+                    <span>Dashboard</span>
+                  </a>
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleNavigation("/opportunity");
+                    }}
+                    className={`menu-item ${location.pathname === "/opportunity" ? "active" : ""}`}
+                  >
+                    <span className="menu-icon">💼</span>
+                    <span>Opportunities</span>
+                  </a>
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleNavigation("/mentorship");
+                    }}
+                    className={`menu-item ${location.pathname === "/mentorship" ? "active" : ""}`}
+                  >
+                    <span className="menu-icon">🤝</span>
+                    <span>Mentorship</span>
+                  </a>
+                  <a href="#" className="menu-item" onClick={(e) => e.preventDefault()}>
+                    <span className="menu-icon">📅</span>
+                    <span>Events</span>
+                  </a>
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleNavigation("/community");
+                    }}
+                    className={`menu-item ${location.pathname === "/community" ? "active" : ""}`}
+                  >
+                    <span className="menu-icon">💬</span>
+                    <span>Community Feed</span>
+                  </a>
+                </nav>
+              </div>
+            </div>
+
+            <div className="sidebar-footer">
+              <div className="user-profile">
+                <div className="user-avatar">
+                  {userData?.name?.charAt(0)?.toUpperCase() || "S"}
+                </div>
+                <div className="user-info">
+                  <p className="user-name">{userData?.name || "Student"}</p>
+                  <p className="user-role">Student Account</p>
+                </div>
+                <button className="user-menu-btn" type="button" aria-label="User menu">
+                  ⋮
+                </button>
+              </div>
+              <button className="logout-btn" type="button" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
+          </aside>
+        )}
 
         <section className="dashboard-content cf-content">
           <div className="cf-hero">

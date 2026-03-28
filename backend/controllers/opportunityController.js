@@ -131,7 +131,6 @@ exports.getAllOpportunitiesForAdmin = async (req, res) => {
 exports.updateOpportunityStatusByAdmin = async (req, res) => {
   try {
     const { status } = req.body;
-    const notificationController = require("./notificationController");
 
     if (!["approved", "rejected"].includes(status)) {
       return res.status(400).json({ message: "Invalid status value" });
@@ -147,12 +146,21 @@ exports.updateOpportunityStatusByAdmin = async (req, res) => {
       return res.status(404).json({ message: "Opportunity not found" });
     }
 
-    // Send notification to the alumni who posted this job
-    if (status === "approved" && opportunity.postedBy) {
-      await notificationController.notifyJobApproved(
-        opportunity.postedBy._id,
-        opportunity.title
-      );
+    // Notify alumni who posted the opportunity about moderation outcome
+    if (opportunity.postedBy) {
+      if (status === "approved") {
+        await notificationController.notifyJobApproved(
+          opportunity.postedBy._id,
+          opportunity.title,
+          opportunity._id
+        );
+      } else {
+        await notificationController.notifyJobRejected(
+          opportunity.postedBy._id,
+          opportunity.title,
+          opportunity._id
+        );
+      }
     }
 
     res.json({ message: `Opportunity ${status} successfully`, opportunity });
@@ -249,13 +257,30 @@ exports.reviewOpportunityReportByAdmin = async (req, res) => {
       return res.status(400).json({ message: "This report has already been reviewed" });
     }
 
-    const opportunity = await Opportunity.findById(report.opportunity);
+    const opportunity = await Opportunity.findById(report.opportunity).populate("postedBy", "name email");
     if (!opportunity) {
       return res.status(404).json({ message: "Related opportunity not found" });
     }
 
     opportunity.status = decision;
     await opportunity.save();
+
+    // Notify alumni when report moderation changes their opportunity status
+    if (opportunity.postedBy) {
+      if (decision === "approved") {
+        await notificationController.notifyJobApproved(
+          opportunity.postedBy._id,
+          opportunity.title,
+          opportunity._id
+        );
+      } else {
+        await notificationController.notifyJobRejected(
+          opportunity.postedBy._id,
+          opportunity.title,
+          opportunity._id
+        );
+      }
+    }
 
     const reviewedAt = new Date();
 

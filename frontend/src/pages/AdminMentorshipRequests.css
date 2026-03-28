@@ -1,6 +1,6 @@
 .admin-mentorship-title {
-  margin: 0 0 16px;
-  color: #0f172a;
+  margin: 0 0 20px;
+  color: var(--admin-text);
 }
 
 .admin-mentorship-error {
@@ -8,21 +8,23 @@
   color: #991b1b;
   border: 1px solid #fecaca;
   background: #fee2e2;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 12px;
 }
 
 .admin-mentorship-loading {
   padding: 20px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  background: var(--admin-surface-solid);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(76, 95, 172, 0.12);
 }
 
 .admin-mentorship-table-wrap {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background: var(--admin-surface-solid);
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgba(76, 95, 172, 0.14);
   overflow: auto;
 }
 
@@ -34,17 +36,19 @@
 .admin-mentorship-table th,
 .admin-mentorship-table td {
   text-align: left;
-  padding: 12px 14px;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 13px 14px;
+  border-bottom: 1px solid #e7edff;
 }
 
 .admin-mentorship-table th {
-  background: #f8fafc;
-  color: #334155;
+  background: #f5f7ff;
+  color: #435079;
   font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .empty-row {
   text-align: center;
-  color: #64748b;
+  color: var(--admin-muted);
 }

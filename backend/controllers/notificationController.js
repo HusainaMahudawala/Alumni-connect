@@ -187,6 +187,26 @@ exports.notifyJobApplied = async (jobOwnerId, applicantName, jobTitle, jobId) =>
   );
 };
 
+// Notify alumni when their opportunity is approved
+exports.notifyJobApproved = async (jobOwnerId, jobTitle, jobId) => {
+  return exports.createNotificationHelper(
+    jobOwnerId,
+    "job_approved",
+    `Your opportunity "${jobTitle}" has been approved by admin`,
+    { jobId, jobTitle, actionUrl: "/my-opportunities" }
+  );
+};
+
+// Notify alumni when their opportunity is rejected
+exports.notifyJobRejected = async (jobOwnerId, jobTitle, jobId) => {
+  return exports.createNotificationHelper(
+    jobOwnerId,
+    "job_rejected",
+    `Your opportunity "${jobTitle}" was rejected by admin`,
+    { jobId, jobTitle, actionUrl: "/my-opportunities" }
+  );
+};
+
 // Notify connection request
 exports.notifyConnectionRequest = async (userId, requesterId, requesterName) => {
   return exports.createNotificationHelper(

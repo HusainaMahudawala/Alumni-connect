@@ -184,6 +184,19 @@
   border-radius: 12px;
   padding: 10px;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar-profile:hover {
+  border-color: #c9d2ff;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.14);
+}
+
+.sidebar-profile:focus-visible {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
 }
 
 .profile-avatar {

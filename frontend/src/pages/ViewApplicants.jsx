@@ -116,7 +116,11 @@ function ViewApplicants() {
                 <span>💼</span>
                 Jobs Board
               </button>
-              <button type="button" className="sidebar-menu-item muted">
+              <button
+                type="button"
+                onClick={() => navigate("/community")}
+                className={`sidebar-menu-item ${location.pathname === "/community" ? "active" : ""}`}
+              >
                 <span>🗣</span>
                 Community Feed
               </button>

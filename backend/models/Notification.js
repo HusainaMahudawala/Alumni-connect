@@ -15,6 +15,8 @@ const notificationSchema = new mongoose.Schema(
         "mentorship_approved",
         "mentorship_rejected",
         "job_applied",
+        "job_approved",
+        "job_rejected",
         "connect_request",
         "collaboration_offer",
         "message_received"
@@ -33,6 +35,8 @@ const notificationSchema = new mongoose.Schema(
       fromUserId: mongoose.Schema.Types.ObjectId,
       fromUserName: String,
       jobTitle: String,
+      actionUrl: String,
+      isAction: Boolean,
       meetingLink: String,
       meetingDate: Date,
       meetingLocation: String

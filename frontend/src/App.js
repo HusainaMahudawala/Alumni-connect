@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import CommunityFeed from "./components/CommunityFeed";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -21,6 +21,39 @@ import AlumniDirectory from "./pages/AlumniDirectory";
 import AlumniProfile from "./pages/AlumniProfile";
 import EditAlumniProfile from "./pages/EditAlumniProfile";
 import AlumniChat from "./pages/AlumniChat";
+
+function getRedirectPathForAuthenticatedUser() {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+
+  let role = localStorage.getItem("role");
+
+  if (!role) {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "null");
+      role = user?.role || "";
+    } catch {
+      role = "";
+    }
+  }
+
+  const normalizedRole = String(role || "").toLowerCase();
+
+  if (normalizedRole === "admin") return "/admin/dashboard";
+  if (normalizedRole === "alumni") return "/alumni-dashboard";
+  return "/student";
+}
+
+function PublicRoute({ children }) {
+  const authRedirectPath = getRedirectPathForAuthenticatedUser();
+
+  if (authRedirectPath) {
+    return <Navigate to={authRedirectPath} replace />;
+  }
+
+  return children;
+}
+
 function App() {
   return (
     <Router>
@@ -33,10 +66,38 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/register" element={<Register />} />
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <LandingPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/admin/login"
+          element={
+            <PublicRoute>
+              <AdminLogin />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
         <Route
           path="/student"
           element={
@@ -54,7 +115,14 @@ function App() {
           }
         />
         <Route path="/mentorship" element={<Mentorship />} />
-        <Route path="/alumni-dashboard" element={<AlumniDashboard />} />
+        <Route
+          path="/alumni-dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["alumni"]}>
+              <AlumniDashboard />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/alumni-directory"
           element={

@@ -277,13 +277,9 @@ function AlumniDirectory() {
               </button>
               <button
                 type="button"
-                onClick={() => navigate("/alumni-profile/edit")}
-                className="sidebar-menu-item"
+                onClick={() => navigate("/community")}
+                className={`sidebar-menu-item ${location.pathname === "/community" ? "active" : ""}`}
               >
-                <span>✍</span>
-                Edit Profile
-              </button>
-              <button type="button" className="sidebar-menu-item muted">
                 <span>🗣</span>
                 Community Feed
               </button>

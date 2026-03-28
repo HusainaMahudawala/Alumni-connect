@@ -1,14 +1,14 @@
 .admin-dashboard-page {
-  min-height: 100vh;
-  background: #f1f5f9;
-  padding: 24px;
+  min-height: calc(100vh - 48px);
+  background: transparent;
+  padding: 6px;
 }
 
 .admin-dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .admin-header-actions {
@@ -18,7 +18,8 @@
 
 .admin-dashboard-header h1 {
   margin: 0;
-  color: #0f172a;
+  color: var(--admin-text);
+  font-size: 1.85rem;
 }
 
 .admin-dashboard-header button {
@@ -46,7 +47,7 @@
 .admin-dashboard-error {
   margin-bottom: 16px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   color: #991b1b;
   background: #fee2e2;
   border: 1px solid #fecaca;
@@ -54,44 +55,47 @@
 
 .admin-stats-grid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 }
 
 .admin-stat-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
   padding: 18px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--admin-shadow);
+  backdrop-filter: blur(3px);
 }
 
 .admin-stat-card h2 {
   margin: 0 0 10px;
-  color: #334155;
-  font-size: 1rem;
+  color: #42517b;
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .admin-stat-card p {
   margin: 0;
-  color: #0f172a;
-  font-size: 1.8rem;
+  color: #1f2a4f;
+  font-size: 1.9rem;
   font-weight: 700;
 }
 
 .admin-reports-section {
-  margin-top: 24px;
+  margin-top: 28px;
 }
 
 .admin-reports-section h2 {
   margin: 0 0 12px;
-  color: #0f172a;
+  color: var(--admin-text);
 }
 
 .admin-reports-table-wrap {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background: var(--admin-surface-solid);
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgba(76, 95, 172, 0.14);
   overflow: auto;
 }
 
@@ -103,25 +107,27 @@
 .admin-reports-table th,
 .admin-reports-table td {
   text-align: left;
-  padding: 12px 14px;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 13px 14px;
+  border-bottom: 1px solid #e7edff;
   vertical-align: top;
 }
 
 .admin-reports-table th {
   font-size: 0.83rem;
-  color: #334155;
-  background: #f8fafc;
+  color: #435079;
+  background: #f5f7ff;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .admin-report-title {
   font-weight: 600;
-  color: #0f172a;
+  color: #1f2a4f;
 }
 
 .admin-report-sub {
   font-size: 0.82rem;
-  color: #64748b;
+  color: var(--admin-muted);
   margin-top: 2px;
 }
 
@@ -134,7 +140,7 @@
 
 .admin-report-status {
   display: inline-block;
-  padding: 4px 10px;
+  padding: 5px 11px;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -159,16 +165,18 @@
 .admin-report-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .admin-action-btn {
   border: none;
-  border-radius: 8px;
-  padding: 6px 10px;
+  border-radius: 9px;
+  padding: 7px 11px;
   font-size: 0.8rem;
   font-weight: 700;
   color: #fff;
   cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .admin-action-btn:disabled {
@@ -177,23 +185,39 @@
 }
 
 .admin-action-btn.approve {
-  background: #16a34a;
+  background: linear-gradient(135deg, #10b981, #059669);
 }
 
 .admin-action-btn.approve:hover:enabled {
-  background: #15803d;
+  transform: translateY(-1px);
+  filter: brightness(0.96);
 }
 
 .admin-action-btn.reject {
-  background: #dc2626;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
 .admin-action-btn.reject:hover:enabled {
-  background: #b91c1c;
+  transform: translateY(-1px);
+  filter: brightness(0.96);
 }
 
 .admin-reviewed-note {
   font-size: 0.82rem;
-  color: #64748b;
+  color: var(--admin-muted);
   font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .admin-dashboard-page {
+    padding: 2px;
+  }
+
+  .admin-dashboard-header h1 {
+    font-size: 1.45rem;
+  }
+
+  .admin-stats-grid {
+    grid-template-columns: 1fr;
+  }
 }

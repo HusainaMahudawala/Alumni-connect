@@ -85,6 +85,7 @@ const LandingPage = () => {
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-content">
+          <p className="hero-badge">Trusted by 5000+ alumni and students</p>
           <h1 className="hero-title">
             Connect with Alumni, <span>Build Your Future</span>
           </h1>
@@ -106,8 +107,13 @@ const LandingPage = () => {
               Sign In
             </button>
           </div>
+          <div className="hero-trust-row">
+            <span>Mentorship</span>
+            <span>Opportunities</span>
+            <span>Community</span>
+          </div>
         </div>
-        <div className="hero-image">
+        <div className="hero-image" aria-hidden="true">
           <div className="hero-illustration">
             <div className="circle circle-1"></div>
             <div className="circle circle-2"></div>
@@ -118,7 +124,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="features-section">
+      <section id="features" className="features-section scroll-target">
         <div className="section-header">
           <h2>Why Join Alumni Connect?</h2>
           <p>We provide extensive features to help you grow and succeed</p>
@@ -132,6 +138,34 @@ const LandingPage = () => {
               <p>{feature.description}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="about-section scroll-target">
+        <div className="about-content">
+          <div>
+            <p className="section-kicker">About Alumni Connect</p>
+            <h2>Built to turn alumni connections into real career outcomes</h2>
+            <p>
+              Alumni Connect bridges the gap between alumni and students through mentorship, opportunities,
+              and networking. Our mission is to make career guidance practical, accessible, and community-driven.
+            </p>
+          </div>
+          <div className="about-points">
+            <div className="about-point">
+              <h3>Student-first growth</h3>
+              <p>Get direct guidance from industry professionals who once walked your path.</p>
+            </div>
+            <div className="about-point">
+              <h3>Alumni impact</h3>
+              <p>Give back, share opportunities, and shape the next generation of professionals.</p>
+            </div>
+            <div className="about-point">
+              <h3>Verified network</h3>
+              <p>Connect within a focused and trusted university-alumni ecosystem.</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -178,6 +212,28 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Contact Section */}
+      <section id="contact" className="contact-section scroll-target">
+        <div className="section-header">
+          <h2>Contact Us</h2>
+          <p>Have questions? We are here to help.</p>
+        </div>
+        <div className="contact-grid">
+          <div className="contact-card">
+            <h3>Email</h3>
+            <a href="mailto:support@alumniconnect.com">support@alumniconnect.com</a>
+          </div>
+          <div className="contact-card">
+            <h3>Phone</h3>
+            <a href="tel:+911234567890">+91 12345 67890</a>
+          </div>
+          <div className="contact-card">
+            <h3>Office Hours</h3>
+            <p>Mon - Fri, 9:00 AM - 6:00 PM</p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="cta-section">
         <h2>Ready to Transform Your Career?</h2>
@@ -207,7 +263,7 @@ const LandingPage = () => {
           </div>
           <div className="footer-section">
             <h4>Follow Us</h4>
-            <p>🔗 LinkedIn | 📘 Facebook | 🐦 Twitter</p>
+            <p>LinkedIn | Facebook | Twitter</p>
           </div>
         </div>
         <div className="footer-bottom">

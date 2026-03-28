@@ -260,13 +260,9 @@ function AlumniDashboard() {
               </button>
               <button
                 type="button"
-                onClick={() => navigate("/alumni-profile/edit")}
-                className="sidebar-menu-item"
+                onClick={() => navigate("/community")}
+                className={`sidebar-menu-item ${location.pathname === "/community" ? "active" : ""}`}
               >
-                <span>✍</span>
-                Edit Profile
-              </button>
-              <button type="button" className="sidebar-menu-item muted">
                 <span>🗣</span>
                 Community Feed
               </button>
@@ -285,7 +281,19 @@ function AlumniDashboard() {
             </nav>
           </div>
 
-          <div className="sidebar-profile">
+          <div
+            className="sidebar-profile"
+            role="button"
+            tabIndex={0}
+            title="Edit Profile"
+            onClick={() => navigate("/alumni-profile/edit")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate("/alumni-profile/edit");
+              }
+            }}
+          >
             <div className="profile-avatar">{displayName.charAt(0).toUpperCase()}</div>
             <div>
               <p className="profile-name">{displayName}</p>

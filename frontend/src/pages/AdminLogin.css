@@ -2,28 +2,32 @@
   min-height: 100vh;
   display: grid;
   place-items: center;
-  background: linear-gradient(145deg, #0f172a 0%, #1e293b 45%, #334155 100%);
+  background: radial-gradient(circle at 18% 20%, rgba(102, 126, 234, 0.35), transparent 34%),
+    radial-gradient(circle at 84% 82%, rgba(118, 75, 162, 0.28), transparent 38%),
+    linear-gradient(145deg, #f6f8ff 0%, #eef1ff 45%, #e7ecff 100%);
   padding: 16px;
 }
 
 .admin-login-card {
   width: 100%;
   max-width: 440px;
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 28px;
-  box-shadow: 0 22px 52px rgba(2, 6, 23, 0.35);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #d9e2ff;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 22px 52px rgba(102, 126, 234, 0.24);
+  backdrop-filter: blur(4px);
 }
 
 .admin-login-card h1 {
   margin: 0;
-  color: #0f172a;
+  color: #1f2a4f;
   font-size: 1.75rem;
 }
 
 .admin-login-card p {
   margin: 8px 0 22px;
-  color: #475569;
+  color: #5d688b;
 }
 
 .admin-login-form {
@@ -33,22 +37,24 @@
 }
 
 .admin-login-form label {
-  color: #0f172a;
+  color: #2f3b66;
   font-weight: 600;
   font-size: 0.9rem;
 }
 
 .admin-login-form input {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border: 1px solid #c8d5ff;
+  border-radius: 10px;
   padding: 11px 12px;
   font-size: 0.95rem;
+  color: #273254;
+  background: #fff;
 }
 
 .admin-login-form input:focus {
   outline: none;
-  border-color: #1d4ed8;
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
 }
 
 .admin-login-error {
@@ -64,16 +70,18 @@
 .admin-login-form button {
   margin-top: 8px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 12px;
   font-weight: 700;
-  background: #1d4ed8;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   color: #fff;
   cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .admin-login-form button:hover:enabled {
-  background: #1e40af;
+  transform: translateY(-1px);
+  filter: brightness(0.96);
 }
 
 .admin-login-form button:disabled {

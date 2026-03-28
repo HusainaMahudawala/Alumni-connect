@@ -114,14 +114,6 @@ function AlumniProfile() {
                 <span>👥</span>
                 Alumni Directory
               </button>
-              <button
-                type="button"
-                onClick={() => navigate("/alumni-profile/edit")}
-                className={`sidebar-menu-item ${location.pathname === "/alumni-profile/edit" ? "active" : ""}`}
-              >
-                <span>✍</span>
-                Edit Profile
-              </button>
             </nav>
           </div>
 
