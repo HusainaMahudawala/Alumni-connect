@@ -20,6 +20,7 @@ import AdminMentorshipRequests from "./pages/AdminMentorshipRequests";
 import AlumniDirectory from "./pages/AlumniDirectory";
 import AlumniProfile from "./pages/AlumniProfile";
 import EditAlumniProfile from "./pages/EditAlumniProfile";
+import AlumniChat from "./pages/AlumniChat";
 function App() {
   return (
     <Router>
@@ -75,6 +76,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["alumni"]}>
               <EditAlumniProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/alumni-chat"
+          element={
+            <ProtectedRoute allowedRoles={["alumni"]}>
+              <AlumniChat />
             </ProtectedRoute>
           }
         />

@@ -122,7 +122,10 @@ exports.markAsRead = async (req, res) => {
 
     const message = await Message.findByIdAndUpdate(
       messageId,
-      { isRead: true },
+      { 
+        isRead: true,
+        readAt: new Date(),
+      },
       { new: true }
     );
 

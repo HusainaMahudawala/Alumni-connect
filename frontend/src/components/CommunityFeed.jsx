@@ -111,7 +111,14 @@ const CommunityFeed = () => {
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:5000/api/dashboard/student", {
+      const userRole = localStorage.getItem("role");
+      
+      // Determine the correct endpoint based on user role
+      const endpoint = userRole === "alumni" 
+        ? "http://localhost:5000/api/dashboard/alumni"
+        : "http://localhost:5000/api/dashboard/student";
+      
+      const res = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log('✅ fetchUserData response:', res.data);

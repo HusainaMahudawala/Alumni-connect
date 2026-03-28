@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import StudentStatsGraph from "../components/StudentStatsGraph";
 import NotificationBell from "../components/NotificationBell";
 import ApprovalModal from "../components/ApprovalModal";
+import FloatingChatModal from "../components/FloatingChatModal";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./StudentDashboard.css";
@@ -645,6 +646,9 @@ function StudentDashboard() {
           }}
         />
       )}
+
+      {/* Floating Chat Modal */}
+      <FloatingChatModal />
     </div>
   );
 }

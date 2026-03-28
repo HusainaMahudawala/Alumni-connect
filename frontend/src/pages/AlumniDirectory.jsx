@@ -275,6 +275,14 @@ function AlumniDirectory() {
                 <span>💼</span>
                 Jobs Board
               </button>
+              <button
+                type="button"
+                onClick={() => navigate("/alumni-profile/edit")}
+                className="sidebar-menu-item"
+              >
+                <span>✍</span>
+                Edit Profile
+              </button>
               <button type="button" className="sidebar-menu-item muted">
                 <span>🗣</span>
                 Community Feed

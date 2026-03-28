@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import NotificationBell from "../components/NotificationBell";
 import ApprovalModal from "../components/ApprovalModal";
+import FloatingChatModal from "../components/FloatingChatModal";
 import "./AlumniDashboard.css";
 import "./MyOpportunities.css";
 
@@ -569,6 +570,9 @@ function AlumniDashboard() {
           }}
         />
       )}
+
+      {/* Floating Chat Modal */}
+      <FloatingChatModal />
     </div>
   );
 }

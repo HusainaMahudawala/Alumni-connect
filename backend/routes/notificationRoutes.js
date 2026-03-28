@@ -7,11 +7,11 @@ const router = express.Router();
 // Get all notifications for current user
 router.get("/", authMiddleware, notificationController.getNotifications);
 
-// Create notification
+// Create notification (from backend only)
 router.post("/", authMiddleware, notificationController.createNotification);
 
 // Mark as read
-router.put("/mark-read", authMiddleware, notificationController.markAsRead);
+router.patch("/mark-read", authMiddleware, notificationController.markAsRead);
 
 // Delete notification
 router.delete("/", authMiddleware, notificationController.deleteNotification);

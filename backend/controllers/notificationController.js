@@ -7,9 +7,12 @@ exports.getNotifications = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(50);
 
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+
     res.json({
       success: true,
       count: notifications.length,
+      unreadCount,
       notifications
     });
   } catch (error) {
@@ -90,6 +93,8 @@ exports.deleteNotification = async (req, res) => {
   }
 };
 
+// ============ HELPER FUNCTIONS FOR OTHER CONTROLLERS ============
+
 // Helper function to create notifications from other controllers
 exports.createNotificationHelper = async (
   userId,
@@ -110,4 +115,100 @@ exports.createNotificationHelper = async (
     console.error("Error creating notification:", error.message);
     return null;
   }
+};
+
+// Notify mentorship request
+exports.notifyMentorshipRequest = async (alumniId, studentName, mentorshipId) => {
+  return exports.createNotificationHelper(
+    alumniId,
+    "mentorship_request",
+    `New mentorship request from ${studentName}`,
+    { 
+      mentorshipId,
+      actionUrl: "/mentorship-requests",
+      isAction: true
+    }
+  );
+};
+
+// Notify mentorship approved with meeting details
+exports.notifyMentorshipApproved = async (
+  studentId,
+  alumniName,
+  meetingLink,
+  meetingDate,
+  meetingLocation,
+  mentorshipId
+) => {
+  return exports.createNotificationHelper(
+    studentId,
+    "mentorship_approved",
+    `${alumniName} approved your mentorship request!`,
+    {
+      mentorshipId,
+      meetingLink,
+      meetingDate,
+      meetingLocation,
+      actionUrl: "/mentorship"
+    }
+  );
+};
+
+// Notify mentorship rejected
+exports.notifyMentorshipRejected = async (studentId, alumniName, mentorshipId) => {
+  return exports.createNotificationHelper(
+    studentId,
+    "mentorship_rejected",
+    `${alumniName} declined your mentorship request`,
+    { 
+      mentorshipId,
+      actionUrl: "/mentorship"
+    }
+  );
+};
+
+// Notify message received
+exports.notifyMessageReceived = async (userId, senderName, messagePreview) => {
+  return exports.createNotificationHelper(
+    userId,
+    "message_received",
+    `New message from ${senderName}: ${messagePreview}`,
+    { actionUrl: "/alumni-chat" }
+  );
+};
+
+// Notify job applied
+exports.notifyJobApplied = async (jobOwnerId, applicantName, jobTitle, jobId) => {
+  return exports.createNotificationHelper(
+    jobOwnerId,
+    "job_applied",
+    `${applicantName} applied for "${jobTitle}"`,
+    { jobId, actionUrl: "/my-opportunities" }
+  );
+};
+
+// Notify connection request
+exports.notifyConnectionRequest = async (userId, requesterId, requesterName) => {
+  return exports.createNotificationHelper(
+    userId,
+    "connect_request",
+    `${requesterName} sent you a connection request`,
+    { 
+      fromUserId: requesterId,
+      fromUserName: requesterName
+    }
+  );
+};
+
+// Notify collaboration offer
+exports.notifyCollaborationOffer = async (userId, fromUserId, fromUserName, projectTitle) => {
+  return exports.createNotificationHelper(
+    userId,
+    "collaboration_offer",
+    `${fromUserName} invited you to collaborate on "${projectTitle}"`,
+    { 
+      fromUserId,
+      fromUserName
+    }
+  );
 };

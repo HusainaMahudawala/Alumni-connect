@@ -131,6 +131,7 @@ exports.getAllOpportunitiesForAdmin = async (req, res) => {
 exports.updateOpportunityStatusByAdmin = async (req, res) => {
   try {
     const { status } = req.body;
+    const notificationController = require("./notificationController");
 
     if (!["approved", "rejected"].includes(status)) {
       return res.status(400).json({ message: "Invalid status value" });
@@ -144,6 +145,14 @@ exports.updateOpportunityStatusByAdmin = async (req, res) => {
 
     if (!opportunity) {
       return res.status(404).json({ message: "Opportunity not found" });
+    }
+
+    // Send notification to the alumni who posted this job
+    if (status === "approved" && opportunity.postedBy) {
+      await notificationController.notifyJobApproved(
+        opportunity.postedBy._id,
+        opportunity.title
+      );
     }
 
     res.json({ message: `Opportunity ${status} successfully`, opportunity });
