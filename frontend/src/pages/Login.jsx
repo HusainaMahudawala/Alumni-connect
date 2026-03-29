@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./Login.css";
 import { useNavigate } from "react-router-dom";
+import loginImage from "../assets/login.png";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -48,7 +49,7 @@ function Login() {
             <div className="illustration-circle circle-2"></div>
             <div className="illustration-circle circle-3"></div>
             <div className="illustration-content">
-              <div className="user-illustration">👋</div>
+              <img className="user-illustration" src={loginImage} alt="Welcome" />
               <p className="illustration-text">Welcome Back!</p>
             </div>
           </div>

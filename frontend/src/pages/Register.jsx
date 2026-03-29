@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./Register.css";
 import { useNavigate } from "react-router-dom";
+  import loginImage from "../assets/login.png";
 
 function Register() {
   const [name, setName] = useState("");
@@ -114,7 +115,7 @@ function Register() {
             <div className="illustration-circle circle-2"></div>
             <div className="illustration-circle circle-3"></div>
             <div className="illustration-content">
-              <div className="user-illustration">👨‍🎓</div>
+              <img className="user-illustration" src={loginImage} alt="Join Our Community" />
               <p className="illustration-text">Join Our Community</p>
             </div>
           </div>
