@@ -35,6 +35,7 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
+  console.log(`Backend root: ${__dirname}`);
   console.log(`Server running on port ${PORT}`);
 });
 

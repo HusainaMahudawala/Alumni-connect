@@ -260,13 +260,6 @@ const Events = () => {
               <p className="brand-sub">Alumni Portal</p>
             </div>
           </div>
-
-          <div className="topbar-actions">
-            <div className="topbar-search">
-              <span className="topbar-search-icon">⌕</span>
-              <input type="text" placeholder="Search events..." readOnly />
-            </div>
-          </div>
         </header>
       ) : (
         <header className="events-navbar">

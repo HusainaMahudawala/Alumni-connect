@@ -146,20 +146,26 @@ exports.updateOpportunityStatusByAdmin = async (req, res) => {
       return res.status(404).json({ message: "Opportunity not found" });
     }
 
-    // Notify alumni who posted the opportunity about moderation outcome
+    // Keep only one latest moderation notification for this opportunity.
     if (opportunity.postedBy) {
-      if (status === "approved") {
-        await notificationController.notifyJobApproved(
-          opportunity.postedBy._id,
-          opportunity.title,
-          opportunity._id
-        );
-      } else {
-        await notificationController.notifyJobRejected(
-          opportunity.postedBy._id,
-          opportunity.title,
-          opportunity._id
-        );
+      const type = status === "approved" ? "job_approved" : "job_rejected";
+      const message =
+        status === "approved"
+          ? `Your opportunity "${opportunity.title}" has been approved by admin`
+          : `Your opportunity "${opportunity.title}" was rejected by admin`;
+
+      const notification = await notificationController.replaceOpportunityModerationNotification(
+        opportunity.postedBy._id,
+        type,
+        message,
+        opportunity._id,
+        opportunity.title
+      );
+
+      if (!notification) {
+        return res.status(500).json({
+          message: "Failed to notify the alumni about moderation status."
+        });
       }
     }
 
@@ -172,19 +178,26 @@ exports.updateOpportunityStatusByAdmin = async (req, res) => {
 // Admin: delete opportunity
 exports.deleteOpportunityByAdmin = async (req, res) => {
   try {
-    const opportunity = await Opportunity.findById(req.params.id).populate("postedBy", "_id name");
+    const opportunity = await Opportunity.findById(req.params.id).select("_id title postedBy status");
 
     if (!opportunity) {
       return res.status(404).json({ message: "Opportunity not found" });
     }
 
-    // Send notification to alumni who posted this opportunity
     if (opportunity.postedBy) {
-      await notificationController.notifyJobDeleted(
-        opportunity.postedBy._id,
+      const notification = await notificationController.replaceOpportunityModerationNotification(
+        opportunity.postedBy,
+        "job_deleted",
+        `Your opportunity "${opportunity.title}" has been deleted by admin`,
+        opportunity._id,
         opportunity.title,
-        opportunity._id
       );
+
+      if (!notification) {
+        return res.status(500).json({
+          message: "Failed to notify the alumni about deletion. Opportunity was not deleted."
+        });
+      }
     }
 
     await opportunity.deleteOne();
@@ -274,20 +287,26 @@ exports.reviewOpportunityReportByAdmin = async (req, res) => {
     opportunity.status = decision;
     await opportunity.save();
 
-    // Notify alumni when report moderation changes their opportunity status
+    // Keep only one latest moderation notification for this opportunity.
     if (opportunity.postedBy) {
-      if (decision === "approved") {
-        await notificationController.notifyJobApproved(
-          opportunity.postedBy._id,
-          opportunity.title,
-          opportunity._id
-        );
-      } else {
-        await notificationController.notifyJobRejected(
-          opportunity.postedBy._id,
-          opportunity.title,
-          opportunity._id
-        );
+      const type = decision === "approved" ? "job_approved" : "job_rejected";
+      const message =
+        decision === "approved"
+          ? `Your opportunity "${opportunity.title}" has been approved by admin`
+          : `Your opportunity "${opportunity.title}" was rejected by admin`;
+
+      const notification = await notificationController.replaceOpportunityModerationNotification(
+        opportunity.postedBy._id,
+        type,
+        message,
+        opportunity._id,
+        opportunity.title
+      );
+
+      if (!notification) {
+        return res.status(500).json({
+          message: "Failed to notify the alumni about moderation status."
+        });
       }
     }
 

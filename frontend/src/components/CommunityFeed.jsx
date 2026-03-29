@@ -21,8 +21,10 @@ const CommunityFeed = () => {
   const [recommendedUsers, setRecommendedUsers] = useState([]);
   const [topContributors, setTopContributors] = useState([]);
   const [showAllPostsModal, setShowAllPostsModal] = useState(false);
+  const [showSavedPostsModal, setShowSavedPostsModal] = useState(false);
   const [joinedUsers, setJoinedUsers] = useState(new Set());
   const [modalPageIndex, setModalPageIndex] = useState(0);
+  const [savedModalPageIndex, setSavedModalPageIndex] = useState(0);
   const [selectedAlumni, setSelectedAlumni] = useState(null);
   const [showAlumniProfileModal, setShowAlumniProfileModal] = useState(false);
   const [notification, setNotification] = useState(null);
@@ -46,6 +48,15 @@ const CommunityFeed = () => {
   const [profileImageFile, setProfileImageFile] = useState(null);
   const [profileImagePreview, setProfileImagePreview] = useState("");
   const [profileError, setProfileError] = useState("");
+  const [savedPostIds, setSavedPostIds] = useState(() => {
+    try {
+      const raw = localStorage.getItem("savedPosts") || "[]";
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -341,6 +352,11 @@ const CommunityFeed = () => {
     await fetchPosts();
   };
 
+  const handleSavedPostsChange = (nextSavedPostIds) => {
+    if (!Array.isArray(nextSavedPostIds)) return;
+    setSavedPostIds(nextSavedPostIds);
+  };
+
   // Get current user ID from either userData or localStorage
   const currentUserId = userData?._id || localStorage.getItem("userId");
   const userRole = localStorage.getItem("role");
@@ -522,6 +538,24 @@ const CommunityFeed = () => {
       return hay.includes(q);
     });
   }, [sortedPosts, search]);
+
+  const savedPostsForCard = useMemo(() => {
+    if (!Array.isArray(posts) || posts.length === 0 || savedPostIds.length === 0) return [];
+    const ids = new Set(savedPostIds);
+    return posts
+      .filter((p) => ids.has(p?._id))
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  }, [posts, savedPostIds]);
+
+  const openSavedPost = (postId) => {
+    const idx = savedPostsForCard.findIndex((p) => p?._id === postId);
+    if (idx < 0) {
+      setSavedModalPageIndex(0);
+    } else {
+      setSavedModalPageIndex(Math.floor(idx / MODAL_POSTS_PER_PAGE));
+    }
+    setShowSavedPostsModal(true);
+  };
 
   return (
     <div className="dashboard cf-dashboard">
@@ -838,20 +872,45 @@ const CommunityFeed = () => {
               </div>
 
               <div className="cf-card">
-                <p className="cf-card-title">Explore Communities</p>
+                <p className="cf-card-title">Saved Posts</p>
                 <div className="cf-community-list">
-                  {[
-                    "Frontend Developers",
-                    "UI/UX Designers",
-                    "Tech Internships",
-                  ].map((c) => (
-                    <button key={c} className="cf-row-btn" type="button">
+                  {savedPostsForCard.length > 0 ? (
+                    savedPostsForCard.slice(0, 3).map((post) => (
+                    <button
+                      key={post._id}
+                      className="cf-row-btn"
+                      type="button"
+                      onClick={() => openSavedPost(post._id)}
+                      title="Open saved post"
+                    >
                       <span className="cf-row-icon">👥</span>
-                      <span className="cf-row-text">{c}</span>
+                      <span className="cf-row-text">
+                        {(post.content || "Untitled post").slice(0, 28)}
+                        {(post.content || "").length > 28 ? "..." : ""}
+                      </span>
                       <span className="cf-row-chev">›</span>
                     </button>
-                  ))}
+                    ))
+                  ) : (
+                    <button className="cf-row-btn" type="button" disabled>
+                      <span className="cf-row-icon">🔖</span>
+                      <span className="cf-row-text">No saved posts yet</span>
+                      <span className="cf-row-chev">›</span>
+                    </button>
+                  )}
                 </div>
+                {savedPostsForCard.length > 0 && (
+                  <button
+                    className="view-all-posts-btn"
+                    type="button"
+                    onClick={() => {
+                      setSavedModalPageIndex(0);
+                      setShowSavedPostsModal(true);
+                    }}
+                  >
+                    View All ({savedPostsForCard.length} saved)
+                  </button>
+                )}
               </div>
             </aside>
 
@@ -878,6 +937,7 @@ const CommunityFeed = () => {
                         onLike={handleLike}
                         onComment={handleComment}
                         userId={currentUserId}
+                        onSavedPostsChange={handleSavedPostsChange}
                       />
                     ))}
                   </div>
@@ -986,6 +1046,7 @@ const CommunityFeed = () => {
                     onLike={handleLike}
                     onComment={handleComment}
                     userId={currentUserId}
+                    onSavedPostsChange={handleSavedPostsChange}
                   />
                 ))}
             </div>
@@ -1018,6 +1079,88 @@ const CommunityFeed = () => {
                   (modalPageIndex + 1) *
                     MODAL_POSTS_PER_PAGE >=
                   filteredPosts.length
+                }
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View All Saved Posts Modal */}
+      {showSavedPostsModal && (
+        <div
+          className="view-all-posts-modal-bg"
+          onClick={() => {
+            setShowSavedPostsModal(false);
+            setSavedModalPageIndex(0);
+          }}
+        >
+          <div
+            className="view-all-posts-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2 className="modal-title">Saved Posts ({savedPostsForCard.length})</h2>
+              <button
+                className="modal-close-btn"
+                type="button"
+                onClick={() => {
+                  setShowSavedPostsModal(false);
+                  setSavedModalPageIndex(0);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-posts-container">
+              {savedPostsForCard
+                .slice(
+                  savedModalPageIndex * MODAL_POSTS_PER_PAGE,
+                  (savedModalPageIndex + 1) * MODAL_POSTS_PER_PAGE
+                )
+                .map((post) => (
+                  <PostCard
+                    key={post._id}
+                    post={post}
+                    onLike={handleLike}
+                    onComment={handleComment}
+                    userId={currentUserId}
+                    onSavedPostsChange={handleSavedPostsChange}
+                  />
+                ))}
+            </div>
+
+            <div className="modal-pagination">
+              <button
+                className="pagination-btn"
+                type="button"
+                onClick={() => setSavedModalPageIndex(Math.max(0, savedModalPageIndex - 1))}
+                disabled={savedModalPageIndex === 0}
+              >
+                ← Previous
+              </button>
+              <span className="pagination-info">
+                Page {savedModalPageIndex + 1} of{" "}
+                {Math.max(1, Math.ceil(savedPostsForCard.length / MODAL_POSTS_PER_PAGE))}
+              </span>
+              <button
+                className="pagination-btn"
+                type="button"
+                onClick={() =>
+                  setSavedModalPageIndex(
+                    Math.min(
+                      Math.ceil(savedPostsForCard.length / MODAL_POSTS_PER_PAGE) - 1,
+                      savedModalPageIndex + 1
+                    )
+                  )
+                }
+                disabled={
+                  (savedModalPageIndex + 1) *
+                    MODAL_POSTS_PER_PAGE >=
+                  savedPostsForCard.length
                 }
               >
                 Next →

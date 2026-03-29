@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import axios from "axios";
 
-const PostCard = ({ post, onLike, onComment, userId }) => {
+const PostCard = ({ post, onLike, onComment, userId, onSavedPostsChange }) => {
   const [comment, setComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -35,6 +35,7 @@ const PostCard = ({ post, onLike, onComment, userId }) => {
   const editMediaRecorderRef = React.useRef(null);
   const editRecordedChunksRef = React.useRef([]);
   const editRecordingTimerRef = React.useRef(null);
+  const commentInputRef = React.useRef(null);
   const [removeConfirmation, setRemoveConfirmation] = useState(null); // 'video' or 'file'
 
   // Use userId from prop, fallback to localStorage
@@ -271,6 +272,9 @@ const PostCard = ({ post, onLike, onComment, userId }) => {
       }
       setSavedPosts(updated);
       localStorage.setItem('savedPosts', JSON.stringify(updated));
+      if (typeof onSavedPostsChange === 'function') {
+        onSavedPostsChange(updated);
+      }
     } catch (error) {
       alert("Failed to save post.");
     }
@@ -293,6 +297,16 @@ const PostCard = ({ post, onLike, onComment, userId }) => {
       alert("Failed to comment.");
     }
     setCommentLoading(false);
+  };
+
+  const handleCommentActionClick = () => {
+    setShowAllComments(true);
+    requestAnimationFrame(() => {
+      if (commentInputRef.current) {
+        commentInputRef.current.focus();
+        commentInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
   };
 
   const handleRate = async (value) => {
@@ -417,11 +431,16 @@ const PostCard = ({ post, onLike, onComment, userId }) => {
         >
           👎 {dislikeCount}
         </button>
-        <button className="action-btn" type="button">
+        <button
+          className="action-btn comment-action"
+          onClick={handleCommentActionClick}
+          type="button"
+          title="Add a comment"
+        >
           💬 {post.comments?.length || 0}
         </button>
         <button 
-          className={`action-btn ${(post.videoUrl || post.attachedFileUrl) ? 'has-attachment' : ''}`}
+          className={`action-btn link-action ${(post.videoUrl || post.attachedFileUrl) ? 'has-attachment' : ''}`}
           onClick={() => setShowAttachmentsModal(!showAttachmentsModal)}
           type="button"
           title={attachmentCount > 0 ? `Click to view ${attachmentCount} attachment(s)` : "No attachments"}
@@ -429,7 +448,7 @@ const PostCard = ({ post, onLike, onComment, userId }) => {
           🔗 {attachmentCount}
         </button>
         <button 
-          className={`action-btn ${isSaved ? 'saved' : ''}`}
+          className={`action-btn save-action ${isSaved ? 'saved' : ''}`}
           onClick={handleSavePost}
           type="button"
           title={isSaved ? "Remove from saved" : "Save post"}
@@ -464,6 +483,7 @@ const PostCard = ({ post, onLike, onComment, userId }) => {
 
         <form className="comment-form" onSubmit={handleComment}>
           <input
+            ref={commentInputRef}
             className="comment-input"
             value={comment}
             onChange={(e) => setComment(e.target.value)}

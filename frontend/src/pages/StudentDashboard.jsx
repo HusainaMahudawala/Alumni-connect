@@ -418,9 +418,6 @@ function StudentDashboard() {
           </div>
         </div>
         <div className="navbar-right">
-          <div className="search-bar">
-            <input type="text" placeholder="Search..." />
-          </div>
           <NotificationBell
             onApproveClick={(notification) => {
               setSelectedNotification(notification);

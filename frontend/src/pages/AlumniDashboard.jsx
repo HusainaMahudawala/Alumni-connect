@@ -48,7 +48,6 @@ function AlumniDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [search, setSearch] = useState("");
   const [activityFilter, setActivityFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [modeFilter, setModeFilter] = useState("all");
@@ -122,20 +121,6 @@ function AlumniDashboard() {
   const filteredOpportunities = useMemo(() => {
     return opportunities
       .filter((job) => {
-        const query = search.trim().toLowerCase();
-        const searchable = [
-          job.title,
-          job.company,
-          job.location,
-          ...(job.requiredSkills || []),
-          ...(job.preferredSkills || [])
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-
-        const matchSearch = !query || searchable.includes(query);
-
         const matchActivity =
           activityFilter === "all" ||
           (activityFilter === "with-applicants" && (job.applicantsCount || 0) > 0) ||
@@ -145,13 +130,12 @@ function AlumniDashboard() {
         const matchType = typeFilter === "all" || job.type === typeFilter;
         const matchMode = modeFilter === "all" || job.workMode === modeFilter;
 
-        return matchSearch && matchActivity && matchType && matchMode;
+        return matchActivity && matchType && matchMode;
       })
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [opportunities, search, activityFilter, typeFilter, modeFilter]);
+  }, [opportunities, activityFilter, typeFilter, modeFilter]);
 
   const clearFilters = () => {
-    setSearch("");
     setActivityFilter("all");
     setTypeFilter("all");
     setModeFilter("all");
@@ -215,15 +199,6 @@ function AlumniDashboard() {
         </div>
 
         <div className="topbar-actions">
-          <div className="topbar-search">
-            <span className="topbar-search-icon">⌕</span>
-            <input
-              type="text"
-              placeholder="Quick search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
           <NotificationBell
             onApproveClick={(notification) => {
               setSelectedNotification(notification);
@@ -361,16 +336,6 @@ function AlumniDashboard() {
           </section>
 
           <section className="search-panel">
-            <div className="search-input-wrap">
-              <span>⌕</span>
-              <input
-                type="text"
-                placeholder="Search by role, company, location, or skills..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-
             <div className="chip-row">
               <button
                 type="button"

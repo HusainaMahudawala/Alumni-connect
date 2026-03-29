@@ -89,7 +89,7 @@ function ManageOpportunities() {
           <header className="manage-opportunities-header">
             <div>
               <h1>Manage Opportunities</h1>
-              <p>Approve, reject, or delete alumni-posted opportunities.</p>
+              <p>Admin can approve, reject, or delete at any time. Alumni receives only the latest final update for each opportunity.</p>
             </div>
           </header>
 
@@ -129,7 +129,7 @@ function ManageOpportunities() {
                             <div className="action-group">
                               <button
                                 type="button"
-                                disabled={isBusy || opp.status === "approved"}
+                                disabled={isBusy}
                                 className="action-btn approve"
                                 onClick={() => updateStatus(opp._id, "approved")}
                               >
@@ -137,7 +137,7 @@ function ManageOpportunities() {
                               </button>
                               <button
                                 type="button"
-                                disabled={isBusy || opp.status === "rejected"}
+                                disabled={isBusy}
                                 className="action-btn reject"
                                 onClick={() => updateStatus(opp._id, "rejected")}
                               >

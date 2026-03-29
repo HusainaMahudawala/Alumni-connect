@@ -17,6 +17,7 @@ const notificationSchema = new mongoose.Schema(
         "job_applied",
         "job_approved",
         "job_rejected",
+        "job_deleted",
         "connect_request",
         "collaboration_offer",
         "message_received",

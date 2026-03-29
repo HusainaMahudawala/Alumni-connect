@@ -3,14 +3,28 @@ const Notification = require("../models/Notification");
 // Get all notifications for logged-in user
 exports.getNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ userId: req.user.id })
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+    const skip = (page - 1) * limit;
 
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const baseQuery = { userId: req.user.id };
+
+    const [notifications, totalCount, unreadCount] = await Promise.all([
+      Notification.find(baseQuery)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Notification.countDocuments(baseQuery),
+      Notification.countDocuments({ ...baseQuery, isRead: false })
+    ]);
 
     res.json({
       success: true,
+      page,
+      limit,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      hasMore: skip + notifications.length < totalCount,
       count: notifications.length,
       unreadCount,
       notifications
@@ -79,7 +93,14 @@ exports.deleteNotification = async (req, res) => {
   try {
     const { notificationId } = req.body;
 
-    const notification = await Notification.findByIdAndDelete(notificationId);
+    if (!notificationId) {
+      return res.status(400).json({ success: false, message: "notificationId is required" });
+    }
+
+    const notification = await Notification.findOneAndDelete({
+      _id: notificationId,
+      userId: req.user.id
+    });
 
     if (!notification) {
       return res
@@ -215,6 +236,33 @@ exports.notifyJobDeleted = async (jobOwnerId, jobTitle, jobId) => {
     `Your opportunity "${jobTitle}" has been deleted by admin`,
     { jobId, jobTitle, actionUrl: "/my-opportunities" }
   );
+};
+
+// Keep only one latest moderation notification per opportunity for the alumni.
+exports.replaceOpportunityModerationNotification = async (
+  jobOwnerId,
+  type,
+  message,
+  jobId,
+  jobTitle
+) => {
+  try {
+    await Notification.deleteMany({
+      userId: jobOwnerId,
+      "data.jobId": jobId,
+      type: { $in: ["job_approved", "job_rejected", "job_deleted"] }
+    });
+
+    return exports.createNotificationHelper(
+      jobOwnerId,
+      type,
+      message,
+      { jobId, jobTitle, actionUrl: "/my-opportunities" }
+    );
+  } catch (error) {
+    console.error("Error replacing opportunity moderation notification:", error.message);
+    return null;
+  }
 };
 
 // Notify connection request
