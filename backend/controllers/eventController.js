@@ -1,6 +1,8 @@
 const Event = require("../models/Event");
 const User = require("../models/User");
 const Mentorship = require("../models/Mentorship");
+const Message = require("../models/Message");
+const notificationController = require("./notificationController");
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -35,6 +37,18 @@ const transformMentorshipToEvent = (mentorship, userId) => {
     updatedAt: mentorship.updatedAt,
     isMentorshipSession: true,
     mentorshipId: mentorship._id,
+    studentId: mentorship.student._id,
+    studentName: mentorship.student.name,
+    alumniId: mentorship.alumni._id,
+    alumniName: mentorship.alumni.name,
+    counterpartUserId:
+      String(mentorship.student._id) === String(userId)
+        ? mentorship.alumni._id
+        : mentorship.student._id,
+    counterpartUserName:
+      String(mentorship.student._id) === String(userId)
+        ? mentorship.alumni.name
+        : mentorship.student.name,
     isRegistered: true // user is always a participant of their own mentorship
   };
 };
@@ -283,12 +297,142 @@ exports.unregisterEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
     const userId = req.user.id;
+    const reason = (req.body?.reason || "").trim();
+
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        message: "Reason is required to unregister"
+      });
+    }
+
+    const currentUser = await User.findById(userId).select("name");
+    if (!currentUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Handle private mentorship session pseudo-event IDs from /my/registered.
+    if (eventId.startsWith("mentorship_")) {
+      const mentorshipId = eventId.replace("mentorship_", "");
+      const mentorship = await Mentorship.findById(mentorshipId)
+        .populate("student", "name")
+        .populate("alumni", "name");
+
+      if (!mentorship) {
+        return res.status(404).json({ success: false, message: "Mentorship session not found" });
+      }
+
+      const isParticipant =
+        String(mentorship.student?._id) === String(userId) ||
+        String(mentorship.alumni?._id) === String(userId);
+
+      if (!isParticipant) {
+        return res.status(403).json({ success: false, message: "Not allowed to unregister this session" });
+      }
+
+      if (mentorship.status !== "approved") {
+        return res.status(400).json({ success: false, message: "This session is not active" });
+      }
+
+      const counterpart = String(mentorship.student._id) === String(userId)
+        ? mentorship.alumni
+        : mentorship.student;
+
+      const sessionTitle = mentorship.purpose || "1-on-1 mentorship session";
+
+      mentorship.status = "rejected";
+      await mentorship.save();
+
+      // Restore a mentorship slot for alumni because this approved session is cancelled.
+      if (mentorship.alumni?._id) {
+        await User.findByIdAndUpdate(mentorship.alumni._id, { $inc: { mentorshipSlots: 1 } });
+      }
+
+      if (counterpart?._id) {
+        const chatContent = `Unregistration Reason: I have unregistered from our mentorship session \"${sessionTitle}\". Reason: ${reason}`;
+
+        const messageDoc = new Message({
+          senderId: userId,
+          senderName: currentUser.name,
+          recipientId: counterpart._id,
+          recipientName: counterpart.name,
+          content: chatContent,
+          isRead: false
+        });
+        await messageDoc.save();
+
+        await notificationController.createNotificationHelper(
+          counterpart._id,
+          "event_unregistered",
+          `${currentUser.name} unregistered from your mentorship session.`,
+          {
+            fromUserId: userId,
+            fromUserName: currentUser.name,
+            eventId,
+            eventTitle: sessionTitle,
+            reason,
+            actionUrl: "/events"
+          }
+        );
+      }
+
+      return res.json({
+        success: true,
+        message: "Unregistered from mentorship session successfully"
+      });
+    }
 
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ success: false, message: "Event not found" });
 
+    const wasRegistered = event.registrants.some(id => id.toString() === userId);
+    if (!wasRegistered) {
+      return res.status(400).json({ success: false, message: "You are not registered for this event" });
+    }
+
     event.registrants = event.registrants.filter(id => id.toString() !== userId);
     await event.save();
+
+    const organizerId = event.organizer?.toString();
+    let counterpartUser = null;
+
+    if (organizerId && organizerId !== String(userId)) {
+      counterpartUser = await User.findById(organizerId).select("name");
+    } else if (event.eventType === "mentorship") {
+      // For mentorship events owned by current user, send reason to the other participant.
+      const otherParticipantId = event.registrants.find(id => id.toString() !== String(userId));
+      if (otherParticipantId) {
+        counterpartUser = await User.findById(otherParticipantId).select("name");
+      }
+    }
+
+    if (counterpartUser) {
+      const chatContent = `Unregistration Reason: I have unregistered from your event \"${event.title}\". Reason: ${reason}`;
+
+      const messageDoc = new Message({
+        senderId: userId,
+        senderName: currentUser.name,
+        recipientId: counterpartUser._id,
+        recipientName: counterpartUser.name,
+        content: chatContent,
+        isRead: false
+      });
+      await messageDoc.save();
+
+      await notificationController.createNotificationHelper(
+        counterpartUser._id,
+        "event_unregistered",
+        `${currentUser.name} unregistered from your event "${event.title}".`,
+        {
+          fromUserId: userId,
+          fromUserName: currentUser.name,
+          eventId: event._id,
+          eventTitle: event.title,
+          reason,
+          actionUrl: "/events"
+        }
+      );
+    }
 
     res.json({ success: true, message: "Unregistered from event successfully", event });
   } catch (error) {

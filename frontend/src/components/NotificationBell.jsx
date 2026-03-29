@@ -102,7 +102,8 @@ const NotificationBell = ({ onApproveClick }) => {
       job_deleted: "🗑️",
       connect_request: "🤝",
       collaboration_offer: "🎯",
-      message_received: "💬"
+      message_received: "💬",
+      event_unregistered: "🚪"
     };
     return icons[type] || "🔔";
   };
@@ -155,6 +156,15 @@ const NotificationBell = ({ onApproveClick }) => {
           localStorage.setItem("openChatWithUserId", notification.data.fromUserId);
           localStorage.setItem("openChatWithUserName", notification.data.fromUserName || "User");
           // Dispatch event to notify floating chat
+          window.dispatchEvent(new Event("open-chat-with-user"));
+        }
+        break;
+
+      case "event_unregistered":
+        // Open chat with the user who unregistered to see their reason message.
+        if (notification.data?.fromUserId) {
+          localStorage.setItem("openChatWithUserId", notification.data.fromUserId);
+          localStorage.setItem("openChatWithUserName", notification.data.fromUserName || "User");
           window.dispatchEvent(new Event("open-chat-with-user"));
         }
         break;

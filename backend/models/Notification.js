@@ -19,7 +19,8 @@ const notificationSchema = new mongoose.Schema(
         "job_rejected",
         "connect_request",
         "collaboration_offer",
-        "message_received"
+        "message_received",
+        "event_unregistered"
       ],
       required: true
     },

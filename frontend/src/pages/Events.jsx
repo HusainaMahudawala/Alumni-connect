@@ -15,11 +15,14 @@ const Events = () => {
   const [allEvents, setAllEvents] = useState([]);
   const [myEvents, setMyEvents] = useState([]);
   const [featuredEvent, setFeaturedEvent] = useState(null);
-  const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showUnregisterModal, setShowUnregisterModal] = useState(false);
+  const [unregisterTargetEvent, setUnregisterTargetEvent] = useState(null);
+  const [unregisterReason, setUnregisterReason] = useState("");
+  const [isSubmittingUnregister, setIsSubmittingUnregister] = useState(false);
   const [registeredEventIds, setRegisteredEventIds] = useState(new Set());
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileData, setProfileData] = useState(null);
@@ -522,7 +525,7 @@ const Events = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const timer = setInterval(() => updateCountdowns(), 1000);
     return () => clearInterval(timer);
-  }, [upcomingEvents, featuredEvent]);
+  }, [featuredEvent]);
 
   const fetchEvents = async () => {
     try {
@@ -564,12 +567,6 @@ const Events = () => {
       );
       setRegisteredEventIds(registeredIds);
 
-      // Filter upcoming events (exclude featured)
-      const upcoming = (eventsRes.data.events || []).filter(
-        e => !featuredRes.data.event || e._id !== featuredRes.data.event._id
-      );
-      setUpcomingEvents(upcoming.slice(0, 12));
-
       console.log("✅ Events loaded successfully");
       console.log(`📊 Total events: ${(eventsRes.data.events || []).length}, Featured: ${featuredRes.data.event ? 'Yes' : 'No'}, My events: ${(myEventsRes.data.events || []).length}`);
       setLoading(false);
@@ -585,7 +582,8 @@ const Events = () => {
     const newCountdowns = {};
     const now = new Date();
 
-    [...(upcomingEvents || []), ...(featuredEvent ? [featuredEvent] : [])].forEach(event => {
+    if (featuredEvent) {
+      const event = featuredEvent;
       const eventDate = new Date(event.startDate);
       const diff = eventDate - now;
 
@@ -602,7 +600,7 @@ const Events = () => {
       } else {
         newCountdowns[event._id] = "Started";
       }
-    });
+    }
 
     setCountdowns(newCountdowns);
   };
@@ -621,20 +619,53 @@ const Events = () => {
     }
   };
 
-  const handleUnregister = async (eventId) => {
+  const handleUnregister = async (eventId, reason) => {
     try {
       const token = localStorage.getItem("token");
+      setIsSubmittingUnregister(true);
       await axios.delete(`${API_BASE}/events/${eventId}/register`, {
+        data: { reason },
         headers: { Authorization: `Bearer ${token}` }
       });
 
       const newSet = new Set(registeredEventIds);
       newSet.delete(eventId);
       setRegisteredEventIds(newSet);
+      closeUnregisterModal();
       fetchEvents(); // Refresh
     } catch (err) {
       alert(err.response?.data?.message || "Failed to unregister");
+    } finally {
+      setIsSubmittingUnregister(false);
     }
+  };
+
+  const openUnregisterModal = (event) => {
+    setUnregisterTargetEvent(event);
+    setUnregisterReason("");
+    setShowUnregisterModal(true);
+  };
+
+  const closeUnregisterModal = () => {
+    if (isSubmittingUnregister) return;
+    setShowUnregisterModal(false);
+    setUnregisterTargetEvent(null);
+    setUnregisterReason("");
+  };
+
+  const submitUnregisterReason = () => {
+    const trimmedReason = unregisterReason.trim();
+    if (!trimmedReason) {
+      alert("Please enter a reason before unregistering.");
+      return;
+    }
+
+    if (!unregisterTargetEvent?._id) {
+      alert("Unable to unregister this event right now.");
+      return;
+    }
+
+    handleUnregister(unregisterTargetEvent._id, trimmedReason);
   };
 
   const openEventDetails = (event) => {
@@ -660,6 +691,14 @@ const Events = () => {
     });
   };
 
+  const getAttendeeName = (event) => {
+    if (!event) return "-";
+    if (event.eventType === "mentorship") {
+      return event.studentName || "-";
+    }
+    return event.attendeeName || "-";
+  };
+
   const getEventAttendanceStatus = (event) => {
     const endAt = new Date(event?.endDate || event?.startDate);
     if (Number.isNaN(endAt.getTime()) || endAt.getTime() > Date.now()) return null;
@@ -669,6 +708,18 @@ const Events = () => {
   };
 
   const getAttendanceLabel = (status) => (status === "completed" ? "Completed" : "Unattended");
+
+  const sortedRegisteredEvents = [...myEvents].sort(
+    (a, b) => new Date(a.startDate) - new Date(b.startDate)
+  );
+  const upcomingRegisteredEvents = sortedRegisteredEvents.filter((event) => {
+    const endAt = new Date(event?.endDate || event?.startDate);
+    return !Number.isNaN(endAt.getTime()) && endAt.getTime() > Date.now();
+  });
+  const nextRegisteredEvent = upcomingRegisteredEvents[0] || null;
+  const remainingRegisteredEvents = sortedRegisteredEvents.filter(
+    (event) => event._id !== nextRegisteredEvent?._id
+  );
 
   if (loading) {
     return renderShell(<div className="events-loading">Loading events...</div>);
@@ -691,6 +742,55 @@ const Events = () => {
         <div className="events-header">
           <h1>Events</h1>
           <p>Connect with alumni and students through events</p>
+
+          {/* Next Event from Registered Events */}
+          {nextRegisteredEvent && (
+            <div className="next-event-card">
+              <div className="next-event-header">
+                <div>
+                  <h3 className="next-event-title">{nextRegisteredEvent.title}</h3>
+                  <p className="next-event-organizer">Organizer: {nextRegisteredEvent.organizerName || "-"}</p>
+                  <p className="next-event-attendee">Attendee: {getAttendeeName(nextRegisteredEvent)}</p>
+                </div>
+              </div>
+
+              <div className="next-event-details">
+                <div className="next-detail-row">
+                  <span className="next-icon">📅</span>
+                  <span>{formatDate(nextRegisteredEvent.startDate)}</span>
+                </div>
+                <div className="next-detail-row">
+                  <span className="next-icon">📍</span>
+                  <span className="next-mode-badge">{nextRegisteredEvent.mode}</span>
+                </div>
+              </div>
+
+              <div className="next-event-actions">
+                {nextRegisteredEvent.meetingLink && (
+                  <a
+                    href={nextRegisteredEvent.meetingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-next-join"
+                  >
+                    Join Now
+                  </a>
+                )}
+                <button
+                  className="btn-next-details"
+                  onClick={() => openEventDetails(nextRegisteredEvent)}
+                >
+                  Details
+                </button>
+                <button
+                  className="btn-next-unregister"
+                  onClick={() => openUnregisterModal(nextRegisteredEvent)}
+                >
+                  Unregister
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Featured Event */}
@@ -705,11 +805,14 @@ const Events = () => {
                   <span className="countdown-time">{countdowns[featuredEvent._id]}</span>
                 </div>
               </div>
-              <p className="featured-description">{featuredEvent.description}</p>
               <div className="featured-meta">
                 <div className="meta-item">
-                  <span className="meta-label">By</span>
+                  <span className="meta-label">Organizer</span>
                   <span className="meta-value">{featuredEvent.organizerName}</span>
+                </div>
+                <div className="meta-item">
+                  <span className="meta-label">Attendee</span>
+                  <span className="meta-value">{getAttendeeName(featuredEvent)}</span>
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Date</span>
@@ -719,12 +822,6 @@ const Events = () => {
                   <span className="meta-label">Mode</span>
                   <span className={`mode-badge ${featuredEvent.mode}`}>
                     {featuredEvent.mode}
-                  </span>
-                </div>
-                <div className="meta-item">
-                  <span className="meta-label">Attendees</span>
-                  <span className="meta-value">
-                    {featuredEvent.registrants?.length || 0}/{featuredEvent.capacity}
                   </span>
                 </div>
               </div>
@@ -742,7 +839,7 @@ const Events = () => {
                 {registeredEventIds.has(featuredEvent._id) ? (
                   <button
                     className="btn-unregister"
-                    onClick={() => handleUnregister(featuredEvent._id)}
+                    onClick={() => openUnregisterModal(featuredEvent)}
                   >
                     ✓ Registered
                   </button>
@@ -762,153 +859,57 @@ const Events = () => {
                 </button>
               </div>
             </div>
+
           </div>
         )}
 
-        {/* Upcoming Events */}
-        <div className="upcoming-events-section">
-          <h2>Upcoming Events</h2>
-          {upcomingEvents.length === 0 ? (
-            <div className="events-empty-state">
-              <p className="events-empty-title">No upcoming events yet</p>
-              <p className="events-empty-subtitle">Check back soon for new workshops, webinars, and networking sessions.</p>
-            </div>
-          ) : (
-            <div className="events-grid">
-              {upcomingEvents.map(event => (
-              (() => {
-                const attendanceStatus = getEventAttendanceStatus(event);
-                return (
-              <div key={event._id} className="event-card">
-                {event.isFeatured && <div className="badge-featured">Featured</div>}
-                <div className="event-card-header">
-                  <h3>{event.title}</h3>
-                  <span className={`event-type-tag ${event.eventType}`}>
-                    {event.eventType}
-                  </span>
-                </div>
-
-                {attendanceStatus && (
-                  <div className={`event-attendance-chip ${attendanceStatus}`}>
-                    {getAttendanceLabel(attendanceStatus)}
-                  </div>
-                )}
-
-                <p className="event-description">{event.description?.substring(0, 80)}...</p>
-
-                <div className="event-details">
-                  <div className="detail-row">
-                    <span className="icon">👤</span>
-                    <span>{event.organizerName}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="icon">📅</span>
-                    <span>{formatDate(event.startDate)}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="icon">📍</span>
-                    <span className={`mode-badge ${event.mode}`}>{event.mode}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="icon">⏳</span>
-                    <span className="countdown">{countdowns[event._id]}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="icon">👥</span>
-                    <span>{event.registrants?.length || 0}/{event.capacity}</span>
-                  </div>
-                </div>
-
-                <div className="event-card-actions">
-                  {event.meetingLink && (
-                    <a
-                      href={event.meetingLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-link"
-                      title="Join meeting (requires registration)"
-                    >
-                      📽️ Meeting
-                    </a>
-                  )}
-                  {registeredEventIds.has(event._id) ? (
-                    <button
-                      className="btn-registered"
-                      onClick={() => handleUnregister(event._id)}
-                    >
-                      ✓ Registered
-                    </button>
-                  ) : (
-                    <button
-                      className="btn-register-small"
-                      onClick={() => handleRegister(event._id)}
-                      disabled={event.registrants?.length >= event.capacity}
-                    >
-                      {event.registrants?.length >= event.capacity ? "Full" : "Register"}
-                    </button>
-                  )}
-                  <button
-                    className="btn-view"
-                    onClick={() => openEventDetails(event)}
-                  >
-                    View
-                  </button>
-                </div>
-              </div>
-                );
-              })()
-            ))}
-            </div>
-          )}
-        </div>
-
         {/* My Registered Events */}
-        {myEvents.length > 0 && (
+        {remainingRegisteredEvents.length > 0 && (
           <div className="registered-events-section">
             <h2>My Registered Events</h2>
             <div className="registered-events-list">
-              {myEvents.map(event => (
+              {remainingRegisteredEvents.map(event => (
                 (() => {
                   const attendanceStatus = getEventAttendanceStatus(event);
                   return (
-                <div key={event._id} className="registered-event-item">
-                  <div className="registered-event-content">
-                    <div className="registered-title">
-                      <span className="checkmark">✓</span>
-                      <h4>{event.title}</h4>
-                      {attendanceStatus && (
-                        <span className={`event-attendance-chip ${attendanceStatus}`}>
-                          {getAttendanceLabel(attendanceStatus)}
-                        </span>
-                      )}
+                  <div key={event._id} className="registered-event-item">
+                    <div className="registered-event-content">
+                      <div className="registered-title">
+                        <span className="checkmark">✓</span>
+                        <h4>{event.title}</h4>
+                        {attendanceStatus && (
+                          <span className={`event-attendance-chip ${attendanceStatus}`}>
+                            {getAttendanceLabel(attendanceStatus)}
+                          </span>
+                        )}
+                      </div>
+                      <p className="registered-organizer">By {event.organizerName}</p>
+                      <p className="registered-date">
+                        📅 {formatDate(event.startDate)}
+                      </p>
+                      <p className="registered-mode">
+                        📍 {event.mode} {event.location && `• ${event.location}`}
+                      </p>
                     </div>
-                    <p className="registered-organizer">By {event.organizerName}</p>
-                    <p className="registered-date">
-                      📅 {formatDate(event.startDate)}
-                    </p>
-                    <p className="registered-mode">
-                      📍 {event.mode} {event.location && `• ${event.location}`}
-                    </p>
-                  </div>
-                  <div className="registered-actions">
-                    {event.meetingLink && (
-                      <a
-                        href={event.meetingLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-join"
+                    <div className="registered-actions">
+                      {event.meetingLink && attendanceStatus !== "completed" && (
+                        <a
+                          href={event.meetingLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn-join"
+                        >
+                          Join Now
+                        </a>
+                      )}
+                      <button
+                        className="btn-view-details"
+                        onClick={() => openEventDetails(event)}
                       >
-                        Join Now
-                      </a>
-                    )}
-                    <button
-                      className="btn-view-details"
-                      onClick={() => openEventDetails(event)}
-                    >
-                      Details
-                    </button>
+                        Details
+                      </button>
+                    </div>
                   </div>
-                </div>
                   );
                 })()
               ))}
@@ -935,16 +936,15 @@ const Events = () => {
                 <h2>{selectedEvent.title}</h2>
 
                 <div className="modal-section">
-                  <h4>About</h4>
-                  <p>{selectedEvent.description}</p>
-                </div>
-
-                <div className="modal-section">
                   <h4>Details</h4>
                   <div className="detail-list">
                     <div className="detail-item">
                       <span className="label">Organizer:</span>
                       <span className="value">{selectedEvent.organizerName}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="label">Attendee:</span>
+                      <span className="value">{getAttendeeName(selectedEvent)}</span>
                     </div>
                     <div className="detail-item">
                       <span className="label">Type:</span>
@@ -960,37 +960,14 @@ const Events = () => {
                       <span className="label">Start:</span>
                       <span className="value">{formatDate(selectedEvent.startDate)}</span>
                     </div>
-                    <div className="detail-item">
-                      <span className="label">End:</span>
-                      <span className="value">{formatDate(selectedEvent.endDate)}</span>
-                    </div>
                     {selectedEvent.location && (
                       <div className="detail-item">
                         <span className="label">Location:</span>
                         <span className="value">{selectedEvent.location}</span>
                       </div>
                     )}
-                    <div className="detail-item">
-                      <span className="label">Capacity:</span>
-                      <span className="value">
-                        {selectedEvent.registrants?.length || 0}/{selectedEvent.capacity}
-                      </span>
-                    </div>
                   </div>
                 </div>
-
-                {selectedEvent.tags && selectedEvent.tags.length > 0 && (
-                  <div className="modal-section">
-                    <h4>Tags</h4>
-                    <div className="tags-container">
-                      {selectedEvent.tags.map((tag, idx) => (
-                        <span key={idx} className="tag">
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 <div className="modal-actions">
                   {selectedEvent.meetingLink && (
@@ -1007,7 +984,7 @@ const Events = () => {
                     <button
                       className="btn-modal-unregister"
                       onClick={() => {
-                        handleUnregister(selectedEvent._id);
+                        openUnregisterModal(selectedEvent);
                         closeModal();
                       }}
                     >
@@ -1027,6 +1004,48 @@ const Events = () => {
                         : "Register Now"}
                     </button>
                   )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showUnregisterModal && unregisterTargetEvent && (
+          <div className="modal-overlay" onClick={closeUnregisterModal}>
+            <div className="modal-content unregister-reason-modal" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close" onClick={closeUnregisterModal} disabled={isSubmittingUnregister}>✕</button>
+              <div className="modal-body">
+                <h2>Why are you unregistering?</h2>
+                <div className="modal-section">
+                  <p className="unregister-context">
+                    This reason will be shared with {unregisterTargetEvent.counterpartUserName || unregisterTargetEvent.organizerName || "the other participant"} in chat.
+                  </p>
+                  <textarea
+                    className="unregister-reason-input"
+                    value={unregisterReason}
+                    onChange={(e) => setUnregisterReason(e.target.value)}
+                    placeholder="Write your reason..."
+                    rows={4}
+                    maxLength={400}
+                    disabled={isSubmittingUnregister}
+                  />
+                  <div className="unregister-reason-count">{unregisterReason.trim().length}/400</div>
+                </div>
+                <div className="modal-actions">
+                  <button
+                    className="btn-modal-unregister"
+                    onClick={submitUnregisterReason}
+                    disabled={isSubmittingUnregister}
+                  >
+                    {isSubmittingUnregister ? "Submitting..." : "Confirm Unregister"}
+                  </button>
+                  <button
+                    className="btn-view-details"
+                    onClick={closeUnregisterModal}
+                    disabled={isSubmittingUnregister}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             </div>
