@@ -312,6 +312,9 @@
   overflow-y: auto;
 }
 
+.sd-profile-cancel:hover {
+  background: #f3f4f6;
+}
 .dashboard-content::-webkit-scrollbar {
   width: 8px;
 }
@@ -353,6 +356,80 @@
 }
 
 .section-title {
+.dashboard {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.14), transparent 35%),
+    radial-gradient(circle at 85% 20%, rgba(99, 102, 241, 0.15), transparent 40%),
+    linear-gradient(180deg, #f6f9ff 0%, #eef4ff 100%);
+}
+
+.dashboard-navbar {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(129, 140, 248, 0.2);
+}
+
+.sidebar {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border-right: 1px solid rgba(129, 140, 248, 0.2);
+}
+
+.menu-item.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(56, 189, 248, 0.14));
+  border-left-color: #6366f1;
+  color: #3730a3;
+}
+
+.dashboard-content {
+  padding: 34px 42px;
+}
+
+.stat-card {
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.stat-card:hover {
+  box-shadow: 0 16px 34px rgba(79, 70, 229, 0.16);
+  border-color: rgba(99, 102, 241, 0.42);
+}
+
+.stat-card:nth-child(1) {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f7ff 100%);
+}
+
+.stat-card:nth-child(2) {
+  background: linear-gradient(180deg, #ffffff 0%, #eefcf6 100%);
+}
+
+.stat-card:nth-child(3) {
+  background: linear-gradient(180deg, #ffffff 0%, #f8f2ff 100%);
+}
+
+.stat-card:nth-child(4) {
+  background: linear-gradient(180deg, #ffffff 0%, #fff8eb 100%);
+}
+
+.stat-number {
+  color: #4f46e5;
+}
+
+.recent-activities,
+.quick-stats {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.activity-item {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.activity-item:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 8px 16px rgba(79, 70, 229, 0.1);
+}
   font-size: 18px;
   font-weight: 700;
   color: #1a1a1a;
