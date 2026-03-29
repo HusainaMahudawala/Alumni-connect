@@ -3,10 +3,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import CreatePost from "./CreatePost";
 import PostCard from "./PostCard";
+import NotificationBell from "./NotificationBell";
+import ApprovalModal from "./ApprovalModal";
 import "../styles/CommunityFeed.css";
 import "../pages/StudentDashboard.css";
 import "../pages/AlumniDashboard.css";
 import { useLocation, useNavigate } from "react-router-dom";
+
+const API_BASE = "http://localhost:5000/api";
+const API_HOST = "http://localhost:5000";
 
 const CommunityFeed = () => {
   const [posts, setPosts] = useState([]);
@@ -26,11 +31,34 @@ const CommunityFeed = () => {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [messageRecipient, setMessageRecipient] = useState(null);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [profileModal, setProfileModal] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    interests: "",
+    skills: ""
+  });
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileUploading, setProfileUploading] = useState(false);
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState("");
+  const [profileError, setProfileError] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
   const POSTS_PER_PAGE = 1;
   const MODAL_POSTS_PER_PAGE = 10;
+  const storedUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     fetchPosts();
@@ -116,16 +144,21 @@ const CommunityFeed = () => {
       
       // Determine the correct endpoint based on user role
       const endpoint = userRole === "alumni" 
-        ? "http://localhost:5000/api/dashboard/alumni"
+        ? "http://localhost:5000/api/alumni/me"
         : "http://localhost:5000/api/dashboard/student";
       
       const res = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('✅ fetchUserData response:', res.data);
-      setUserData(res.data);
-      localStorage.setItem("userId", res.data._id);
-      console.log('✅ userId saved to localStorage:', res.data._id);
+
+      const normalizedData = userRole === "alumni" ? (res.data?.data || null) : (res.data || null);
+      console.log("✅ fetchUserData response:", normalizedData);
+      setUserData(normalizedData);
+
+      if (normalizedData?._id) {
+        localStorage.setItem("userId", normalizedData._id);
+        console.log("✅ userId saved to localStorage:", normalizedData._id);
+      }
     } catch (error) {
       console.error('❌ fetchUserData error:', error.response?.data || error.message);
       setUserData(null);
@@ -314,6 +347,9 @@ const CommunityFeed = () => {
   const userRole = localStorage.getItem("role");
   const isAlumni = userRole === "alumni";
   const dashboardPath = isAlumni ? "/alumni-dashboard" : "/student";
+  const displayName = userData?.name || storedUser?.name || "Alumni";
+  const displayEmail = userData?.email || storedUser?.email || "alumni@portal.com";
+  const alumniProfilePicture = userData?.profilePicture || storedUser?.profilePicture;
   
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -324,6 +360,128 @@ const CommunityFeed = () => {
 
   const handleNavigation = (path) => {
     navigate(path);
+  };
+
+  const openProfileModal = async () => {
+    setProfileModal(true);
+    setProfileLoading(true);
+    setProfileError("");
+    setProfileImageFile(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API_BASE}/users/me/student`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const profile = res.data || {};
+      setProfileForm({
+        name: profile.name || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        interests: Array.isArray(profile.interests) ? profile.interests.join(", ") : "",
+        skills: Array.isArray(profile.skills) ? profile.skills.join(", ") : ""
+      });
+
+      if (profile.profilePicture) {
+        setProfileImagePreview(
+          profile.profilePicture.startsWith("http")
+            ? profile.profilePicture
+            : `${API_HOST}${profile.profilePicture}`
+        );
+      } else {
+        setProfileImagePreview("");
+      }
+    } catch (err) {
+      setProfileError(err.response?.data?.message || "Failed to load profile");
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const updateProfileField = (field, value) => {
+    setProfileForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleProfileImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProfileImageFile(file);
+    setProfileImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleProfileImageUpload = async () => {
+    if (!profileImageFile) {
+      setNotification({ type: "error", message: "Please choose an image first." });
+      return;
+    }
+
+    setProfileUploading(true);
+    setProfileError("");
+
+    try {
+      const token = localStorage.getItem("token");
+      const body = new FormData();
+      body.append("profilePicture", profileImageFile);
+
+      const res = await axios.post(`${API_BASE}/users/me/student/profile-picture`, body, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        }
+      });
+
+      const uploadedPath = res.data?.profilePicture || "";
+      if (uploadedPath) {
+        const finalUrl = uploadedPath.startsWith("http") ? uploadedPath : `${API_HOST}${uploadedPath}`;
+        setProfileImagePreview(finalUrl);
+        setUserData((prev) => (prev ? { ...prev, profilePicture: uploadedPath } : prev));
+      }
+
+      setProfileImageFile(null);
+      setNotification({ type: "success", message: "Profile image uploaded." });
+    } catch (err) {
+      const msg = err.response?.data?.message || "Failed to upload image";
+      setProfileError(msg);
+      setNotification({ type: "error", message: msg });
+    } finally {
+      setProfileUploading(false);
+    }
+  };
+
+  const saveProfile = async (e) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileError("");
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(
+        `${API_BASE}/users/me/student`,
+        {
+          ...profileForm,
+          interests: profileForm.interests,
+          skills: profileForm.skills
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      if (res.data?.data) {
+        const updated = res.data.data;
+        setUserData((prev) => ({ ...(prev || {}), name: updated.name, email: updated.email }));
+      }
+
+      setNotification({ type: "success", message: "Profile updated successfully." });
+      setProfileModal(false);
+    } catch (err) {
+      const msg = err.response?.data?.message || "Failed to update profile";
+      setProfileError(msg);
+      setNotification({ type: "error", message: msg });
+    } finally {
+      setProfileSaving(false);
+    }
   };
 
   const sortedPosts = useMemo(() => {
@@ -393,32 +551,62 @@ const CommunityFeed = () => {
         </div>
       )}
 
-      <nav className="dashboard-navbar">
-        <div className="navbar-left">
-          <div className="navbar-logo" onClick={() => handleNavigation(dashboardPath)} role="button" tabIndex={0}>
-            <span className="logo-icon">🎓</span>
-            <div className="logo-text">
-              <div className="logo-main">AlumniConnect</div>
-              <div className="logo-sub">{isAlumni ? "Alumni Portal" : "Student Portal"}</div>
+      {isAlumni ? (
+        <header className="alumni-topbar">
+          <div className="topbar-brand" onClick={() => handleNavigation(dashboardPath)} role="button" tabIndex={0}>
+            <div className="brand-icon">🎓</div>
+            <div className="brand-copy">
+              <p className="brand-main">AlumniConnect</p>
+              <p className="brand-sub">Alumni Portal</p>
             </div>
           </div>
-        </div>
-        <div className="navbar-right">
-          <div className="search-bar cf-top-search">
-            <input
-              type="text"
-              placeholder="Search posts, people, keywords..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+
+          <div className="topbar-actions">
+            <div className="topbar-search">
+              <span className="topbar-search-icon">⌕</span>
+              <input
+                type="text"
+                placeholder="Quick search..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <NotificationBell
+              onApproveClick={(notificationItem) => {
+                setSelectedNotification(notificationItem);
+                setShowApprovalModal(true);
+              }}
             />
           </div>
-          <button className="notification-btn" type="button" aria-label="Notifications">
-            🔔
-          </button>
-        </div>
-      </nav>
+        </header>
+      ) : (
+        <nav className="dashboard-navbar">
+          <div className="navbar-left">
+            <div className="navbar-logo" onClick={() => handleNavigation(dashboardPath)} role="button" tabIndex={0}>
+              <span className="logo-icon">🎓</span>
+              <div className="logo-text">
+                <div className="logo-main">AlumniConnect</div>
+                <div className="logo-sub">Student Portal</div>
+              </div>
+            </div>
+          </div>
+          <div className="navbar-right">
+            <div className="search-bar cf-top-search">
+              <input
+                type="text"
+                placeholder="Search posts, people, keywords..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button className="notification-btn" type="button" aria-label="Notifications">
+              🔔
+            </button>
+          </div>
+        </nav>
+      )}
 
-      <div className="main-container">
+      <div className={isAlumni ? "alumni-shell" : "main-container"}>
         {isAlumni ? (
           <aside className="alumni-sidebar">
             <div className="sidebar-menu-wrap">
@@ -435,7 +623,7 @@ const CommunityFeed = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/alumni-directory")}
-                  className={`sidebar-menu-item ${location.pathname === "/alumni-directory" ? "active" : ""}`}
+                  className="sidebar-menu-item"
                 >
                   <span>👥</span>
                   Alumni Directory
@@ -443,7 +631,7 @@ const CommunityFeed = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/my-opportunities")}
-                  className={`sidebar-menu-item ${location.pathname === "/my-opportunities" ? "active" : ""}`}
+                  className="sidebar-menu-item"
                 >
                   <span>💼</span>
                   Jobs Board
@@ -463,7 +651,7 @@ const CommunityFeed = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/mentorship-requests")}
-                  className={`sidebar-menu-item ${location.pathname === "/mentorship-requests" ? "active" : ""}`}
+                  className="sidebar-menu-item"
                 >
                   <span>🤝</span>
                   Mentorship
@@ -471,12 +659,34 @@ const CommunityFeed = () => {
               </nav>
             </div>
 
-            <div className="sidebar-profile">
-              <div className="profile-avatar">{userData?.name?.charAt(0)?.toUpperCase() || "A"}</div>
+            <div
+              className="sidebar-profile"
+              role="button"
+              tabIndex={0}
+              title="Edit Profile"
+              onClick={() => navigate("/alumni-profile/edit")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate("/alumni-profile/edit");
+                }
+              }}
+            >
+              <div className="profile-avatar">
+                {alumniProfilePicture ? (
+                  <img
+                    src={alumniProfilePicture.startsWith("http") ? alumniProfilePicture : `http://localhost:5000${alumniProfilePicture}`}
+                    alt="Profile"
+                    className="profile-avatar-img"
+                  />
+                ) : (
+                  displayName.charAt(0).toUpperCase()
+                )}
+              </div>
               <div>
-                <p className="profile-name">{userData?.name || "Alumni"}</p>
+                <p className="profile-name">{displayName}</p>
                 <p className="profile-role">Alumni Member</p>
-                <p className="profile-email">{userData?.email || "alumni@portal.com"}</p>
+                <p className="profile-email">{displayEmail}</p>
               </div>
             </div>
 
@@ -543,9 +753,29 @@ const CommunityFeed = () => {
             </div>
 
             <div className="sidebar-footer">
-              <div className="user-profile">
+              <div
+                className="user-profile student-profile-click"
+                role="button"
+                tabIndex={0}
+                title="Edit Profile"
+                onClick={openProfileModal}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openProfileModal();
+                  }
+                }}
+              >
                 <div className="user-avatar">
-                  {userData?.name?.charAt(0)?.toUpperCase() || "S"}
+                  {userData?.profilePicture ? (
+                    <img
+                      src={userData.profilePicture.startsWith("http") ? userData.profilePicture : `${API_HOST}${userData.profilePicture}`}
+                      alt="Profile"
+                      className="user-avatar-img"
+                    />
+                  ) : (
+                    userData?.name?.charAt(0)?.toUpperCase() || "S"
+                  )}
                 </div>
                 <div className="user-info">
                   <p className="user-name">{userData?.name || "Student"}</p>
@@ -943,6 +1173,113 @@ const CommunityFeed = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {profileModal && (
+        <div className="sd-modal-backdrop" onClick={() => setProfileModal(false)}>
+          <div className="sd-modal sd-profile-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sd-modal-header">
+              <h3>👤 Edit Profile</h3>
+              <button className="sd-modal-close" onClick={() => setProfileModal(false)}>✕</button>
+            </div>
+
+            <div className="sd-modal-body">
+              {profileLoading && <p className="sd-modal-state">Loading your profile...</p>}
+
+              {!profileLoading && (
+                <>
+                  <div className="sd-profile-image-block">
+                    <div className="sd-profile-image-preview">
+                      {profileImagePreview ? (
+                        <img src={profileImagePreview} alt="Student profile preview" />
+                      ) : (
+                        <div className="sd-profile-image-fallback">{(profileForm.name || "S").charAt(0).toUpperCase()}</div>
+                      )}
+                    </div>
+                    <div className="sd-profile-image-actions">
+                      <input type="file" accept="image/*" onChange={handleProfileImageSelect} />
+                      <button className="sd-modal-btn" type="button" onClick={handleProfileImageUpload} disabled={profileUploading}>
+                        {profileUploading ? "Uploading..." : "Upload Image"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {profileError && <p className="sd-profile-error">{profileError}</p>}
+
+                  <form className="sd-profile-form" onSubmit={saveProfile}>
+                    <label htmlFor="cf-profile-name">Name</label>
+                    <input
+                      id="cf-profile-name"
+                      type="text"
+                      value={profileForm.name}
+                      onChange={(e) => updateProfileField("name", e.target.value)}
+                      required
+                    />
+
+                    <label htmlFor="cf-profile-email">Email</label>
+                    <input
+                      id="cf-profile-email"
+                      type="email"
+                      value={profileForm.email}
+                      onChange={(e) => updateProfileField("email", e.target.value)}
+                      required
+                    />
+
+                    <label htmlFor="cf-profile-phone">Phone</label>
+                    <input
+                      id="cf-profile-phone"
+                      type="text"
+                      value={profileForm.phone}
+                      onChange={(e) => updateProfileField("phone", e.target.value)}
+                      required
+                    />
+
+                    <label htmlFor="cf-profile-interests">Interests (comma separated)</label>
+                    <textarea
+                      id="cf-profile-interests"
+                      rows={2}
+                      value={profileForm.interests}
+                      onChange={(e) => updateProfileField("interests", e.target.value)}
+                      placeholder="AI, Backend, Product"
+                    />
+
+                    <label htmlFor="cf-profile-skills">Skills (comma separated)</label>
+                    <textarea
+                      id="cf-profile-skills"
+                      rows={2}
+                      value={profileForm.skills}
+                      onChange={(e) => updateProfileField("skills", e.target.value)}
+                      placeholder="React, Node.js, SQL"
+                    />
+
+                    <div className="sd-profile-actions">
+                      <button className="sd-profile-cancel" type="button" onClick={() => setProfileModal(false)}>
+                        Cancel
+                      </button>
+                      <button className="sd-modal-btn" type="submit" disabled={profileSaving}>
+                        {profileSaving ? "Saving..." : "Save Changes"}
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showApprovalModal && selectedNotification && (
+        <ApprovalModal
+          notification={selectedNotification}
+          onClose={() => {
+            setShowApprovalModal(false);
+            setSelectedNotification(null);
+          }}
+          onApproveSuccess={() => {
+            setShowApprovalModal(false);
+            setSelectedNotification(null);
+          }}
+        />
       )}
     </div>
   );

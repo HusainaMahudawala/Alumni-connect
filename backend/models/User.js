@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema(
     // Student-specific
     interests: [String],
     skills: [String],
+    profilePicture: String,
 
     // Alumni-specific
     company: String,

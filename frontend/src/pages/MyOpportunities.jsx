@@ -1,16 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./MyOpportunities.css";
 
 const API = "http://localhost:5000/api/opportunity";
+const API_BASE = "http://localhost:5000/api";
 
 function MyOpportunities() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [jobs, setJobs] = useState([]);
-  const [user, setUser] = useState(null);
+  const [alumniProfile, setAlumniProfile] = useState(null);
+  const storedUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  }, []);
   const [deleteId, setDeleteId] = useState(null);
   const [editJob, setEditJob] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -23,12 +31,11 @@ function MyOpportunities() {
   const [posting, setPosting] = useState(false);
 
   useEffect(() => {
-    fetchJobs();
-    try {
-      setUser(JSON.parse(localStorage.getItem("user") || "null"));
-    } catch {
-      setUser(null);
-    }
+    const loadData = async () => {
+      await fetchJobs();
+      await fetchAlumniProfile();
+    };
+    loadData();
   }, []);
 
   const showToast = (msg, type = "success") => {
@@ -42,6 +49,18 @@ function MyOpportunities() {
       headers: { Authorization: `Bearer ${token}` },
     });
     setJobs(res.data);
+  };
+
+  const fetchAlumniProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API_BASE}/alumni/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAlumniProfile(response.data.data);
+    } catch (error) {
+      console.error("Error fetching alumni profile:", error);
+    }
   };
 
   const openEdit = (job) => {
@@ -116,8 +135,8 @@ function MyOpportunities() {
     navigate("/");
   };
 
-  const displayName = user?.name || "Alumni";
-  const displayEmail = user?.email || "alumni@portal.com";
+  const displayName = storedUser?.name || "Alumni";
+  const displayEmail = storedUser?.email || "alumni@portal.com";
 
   const normalizeStatus = (status) => {
     const safe = (status || "pending").toLowerCase();
@@ -198,8 +217,30 @@ function MyOpportunities() {
             </nav>
           </div>
 
-          <div className="sidebar-profile">
-            <div className="profile-avatar">{displayName.charAt(0).toUpperCase()}</div>
+          <div
+            className="sidebar-profile"
+            role="button"
+            tabIndex={0}
+            title="Edit Profile"
+            onClick={() => navigate("/alumni-profile/edit")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate("/alumni-profile/edit");
+              }
+            }}
+          >
+            <div className="profile-avatar">
+              {alumniProfile?.profilePicture || storedUser?.profilePicture ? (
+                <img
+                  src={(alumniProfile?.profilePicture || storedUser?.profilePicture).startsWith("http") ? (alumniProfile?.profilePicture || storedUser?.profilePicture) : `http://localhost:5000${alumniProfile?.profilePicture || storedUser?.profilePicture}`}
+                  alt="Profile"
+                  className="profile-avatar-img"
+                />
+              ) : (
+                displayName.charAt(0).toUpperCase()
+              )}
+            </div>
             <div>
               <p className="profile-name">{displayName}</p>
               <p className="profile-role">Alumni Member</p>

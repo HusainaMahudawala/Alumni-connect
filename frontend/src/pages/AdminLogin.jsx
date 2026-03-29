@@ -25,7 +25,7 @@ function AdminLogin() {
       localStorage.setItem("role", res.data.user.role);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      navigate("/admin/dashboard");
+      navigate("/admin/dashboard", { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Admin login failed");
     } finally {

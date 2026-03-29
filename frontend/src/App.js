@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import CommunityFeed from "./components/CommunityFeed";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -54,9 +55,43 @@ function PublicRoute({ children }) {
   return children;
 }
 
+function BackNavigationGuard() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const lockedPathRef = useRef("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const currentPath = `${location.pathname}${location.search}${location.hash}`;
+    lockedPathRef.current = currentPath;
+    window.history.pushState({ noBackWhenAuthenticated: true }, "", window.location.href);
+  }, [location.pathname, location.search, location.hash]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const fallbackPath = lockedPathRef.current || getRedirectPathForAuthenticatedUser() || "/";
+      navigate(fallbackPath, { replace: true });
+      window.history.pushState({ noBackWhenAuthenticated: true }, "", window.location.href);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [navigate]);
+
+  return null;
+}
+
 function App() {
   return (
     <Router>
+      <BackNavigationGuard />
       <Routes>
         <Route
           path="/community"

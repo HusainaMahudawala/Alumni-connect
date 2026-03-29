@@ -1,5 +1,125 @@
 const User = require('../models/User');
 
+function parseList(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+exports.getMyStudentProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('name email phone role interests skills profilePicture');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.role !== 'student') {
+      return res.status(403).json({ message: 'Only students can access this endpoint' });
+    }
+
+    return res.json({
+      _id: user._id,
+      name: user.name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      role: user.role,
+      interests: Array.isArray(user.interests) ? user.interests : [],
+      skills: Array.isArray(user.skills) ? user.skills : [],
+      profilePicture: user.profilePicture || ''
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message || 'Failed to load student profile' });
+  }
+};
+
+exports.updateMyStudentProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('name email phone role interests skills profilePicture');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.role !== 'student') {
+      return res.status(403).json({ message: 'Only students can update this profile' });
+    }
+
+    const { name, email, phone, interests, skills } = req.body;
+
+    if (typeof name === 'string') user.name = name.trim();
+    if (typeof email === 'string') user.email = email.trim().toLowerCase();
+    if (typeof phone === 'string') user.phone = phone.trim();
+    if (interests !== undefined) user.interests = parseList(interests);
+    if (skills !== undefined) user.skills = parseList(skills);
+
+    if (!user.name || !user.email || !user.phone) {
+      return res.status(400).json({ message: 'Name, email and phone are required' });
+    }
+
+    const emailInUse = await User.findOne({ email: user.email, _id: { $ne: user._id } }).select('_id');
+    if (emailInUse) {
+      return res.status(400).json({ message: 'Email is already used by another account' });
+    }
+
+    await user.save();
+
+    return res.json({
+      message: 'Student profile updated successfully',
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        interests: user.interests || [],
+        skills: user.skills || [],
+        profilePicture: user.profilePicture || ''
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message || 'Failed to update student profile' });
+  }
+};
+
+exports.uploadMyStudentProfilePicture = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('role profilePicture');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.role !== 'student') {
+      return res.status(403).json({ message: 'Only students can upload profile images' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const profilePicturePath = `/uploads/${req.file.filename}`;
+    user.profilePicture = profilePicturePath;
+    await user.save();
+
+    return res.json({
+      message: 'Profile image uploaded successfully',
+      profilePicture: profilePicturePath
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message || 'Failed to upload profile image' });
+  }
+};
+
 // Admin: list users with optional role filter
 exports.adminGetUsers = async (req, res) => {
   try {

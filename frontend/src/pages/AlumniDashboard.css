@@ -208,6 +208,15 @@
   color: #fff;
   font-weight: 700;
   background: linear-gradient(135deg, #5b60f7, #4338ca);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .profile-name {

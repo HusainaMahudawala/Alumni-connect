@@ -146,6 +146,15 @@ function EditAlumniProfile() {
         setImagePreview(
           uploadedPath.startsWith("http") ? uploadedPath : `${API_HOST}${uploadedPath}`
         );
+        // Update localStorage with new profile picture
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...user,
+            profilePicture: uploadedPath
+          })
+        );
       }
       setImageFile(null);
       showToast("Profile picture uploaded.");
@@ -186,7 +195,8 @@ function EditAlumniProfile() {
           JSON.stringify({
             ...user,
             name: res.data.data.name,
-            email: res.data.data.email
+            email: res.data.data.email,
+            profilePicture: res.data.data.profilePicture || form.profilePicture
           })
         );
       }
@@ -265,8 +275,30 @@ function EditAlumniProfile() {
             </nav>
           </div>
 
-          <div className="sidebar-profile">
-            <div className="profile-avatar">{displayName.charAt(0).toUpperCase()}</div>
+          <div
+            className="sidebar-profile"
+            role="button"
+            tabIndex={0}
+            title="Edit Profile"
+            onClick={() => navigate("/alumni-profile/edit")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate("/alumni-profile/edit");
+              }
+            }}
+          >
+            <div className="profile-avatar">
+              {form.profilePicture ? (
+                <img
+                  src={form.profilePicture.startsWith("http") ? form.profilePicture : `http://localhost:5000${form.profilePicture}`}
+                  alt="Profile"
+                  className="profile-avatar-img"
+                />
+              ) : (
+                displayName.charAt(0).toUpperCase()
+              )}
+            </div>
             <div>
               <p className="profile-name">{displayName}</p>
               <p className="profile-role">Alumni Member</p>

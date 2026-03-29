@@ -13,6 +13,7 @@ function MentorshipRequests() {
   const [notification, setNotification] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [alumniProfile, setAlumniProfile] = useState(null);
   const token = localStorage.getItem("token");
 
   const storedUser = useMemo(() => {
@@ -22,6 +23,21 @@ function MentorshipRequests() {
       return null;
     }
   }, []);
+
+  useEffect(() => {
+    const fetchAlumniProfile = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/alumni/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAlumniProfile(response.data.data);
+      } catch (error) {
+        console.error("Error fetching alumni profile:", error);
+      }
+    };
+
+    fetchAlumniProfile();
+  }, [token]);
 
   useEffect(() => {
     fetchRequests();
@@ -160,8 +176,30 @@ function MentorshipRequests() {
             </nav>
           </div>
 
-          <div className="sidebar-profile">
-            <div className="profile-avatar">{displayName.charAt(0).toUpperCase()}</div>
+          <div
+            className="sidebar-profile"
+            role="button"
+            tabIndex={0}
+            title="Edit Profile"
+            onClick={() => navigate("/alumni-profile/edit")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate("/alumni-profile/edit");
+              }
+            }}
+          >
+            <div className="profile-avatar">
+              {alumniProfile?.profilePicture || storedUser?.profilePicture ? (
+                <img
+                  src={(alumniProfile?.profilePicture || storedUser?.profilePicture).startsWith("http") ? (alumniProfile?.profilePicture || storedUser?.profilePicture) : `http://localhost:5000${alumniProfile?.profilePicture || storedUser?.profilePicture}`}
+                  alt="Profile"
+                  className="profile-avatar-img"
+                />
+              ) : (
+                displayName.charAt(0).toUpperCase()
+              )}
+            </div>
             <div>
               <p className="profile-name">{displayName}</p>
               <p className="profile-role">Alumni Member</p>

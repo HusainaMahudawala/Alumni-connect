@@ -24,13 +24,13 @@ function Login() {
     localStorage.setItem("user", JSON.stringify(res.data.user));
 
     if (role === "alumni") {
-      navigate("/alumni-dashboard");
+      navigate("/alumni-dashboard", { replace: true });
     } else if (role === "student") {
-      navigate("/student");
+      navigate("/student", { replace: true });
     } else if (role === "admin") {
-      navigate("/admin/dashboard");
+      navigate("/admin/dashboard", { replace: true });
     } else {
-      navigate("/");
+      navigate("/", { replace: true });
     }
 
   } catch (err) {

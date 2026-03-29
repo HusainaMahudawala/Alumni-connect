@@ -3,6 +3,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./Mentorship.css";
 
+const API_BASE = "http://localhost:5000/api";
+const API_HOST = "http://localhost:5000";
+
 function Mentorship() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,6 +19,20 @@ function Mentorship() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAlumni, setSelectedAlumni] = useState(null);
   const [purposeInput, setPurposeInput] = useState("");
+  const [profileModal, setProfileModal] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    interests: "",
+    skills: ""
+  });
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileUploading, setProfileUploading] = useState(false);
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState("");
+  const [profileError, setProfileError] = useState("");
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -128,6 +145,128 @@ function Mentorship() {
     navigate(path);
   };
 
+  const openProfileModal = async () => {
+    setProfileModal(true);
+    setProfileLoading(true);
+    setProfileError("");
+    setProfileImageFile(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API_BASE}/users/me/student`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const profile = res.data || {};
+      setProfileForm({
+        name: profile.name || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        interests: Array.isArray(profile.interests) ? profile.interests.join(", ") : "",
+        skills: Array.isArray(profile.skills) ? profile.skills.join(", ") : ""
+      });
+
+      if (profile.profilePicture) {
+        setProfileImagePreview(
+          profile.profilePicture.startsWith("http")
+            ? profile.profilePicture
+            : `${API_HOST}${profile.profilePicture}`
+        );
+      } else {
+        setProfileImagePreview("");
+      }
+    } catch (error) {
+      setProfileError(error.response?.data?.message || "Failed to load profile");
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const updateProfileField = (field, value) => {
+    setProfileForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleProfileImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProfileImageFile(file);
+    setProfileImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleProfileImageUpload = async () => {
+    if (!profileImageFile) {
+      setNotification({ type: "error", text: "Please choose an image first." });
+      return;
+    }
+
+    setProfileUploading(true);
+    setProfileError("");
+
+    try {
+      const token = localStorage.getItem("token");
+      const body = new FormData();
+      body.append("profilePicture", profileImageFile);
+
+      const res = await axios.post(`${API_BASE}/users/me/student/profile-picture`, body, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        }
+      });
+
+      const uploadedPath = res.data?.profilePicture || "";
+      if (uploadedPath) {
+        const finalUrl = uploadedPath.startsWith("http") ? uploadedPath : `${API_HOST}${uploadedPath}`;
+        setProfileImagePreview(finalUrl);
+        setUserData((prev) => (prev ? { ...prev, profilePicture: uploadedPath } : prev));
+      }
+
+      setProfileImageFile(null);
+      setNotification({ type: "success", text: "Profile image uploaded." });
+    } catch (error) {
+      const msg = error.response?.data?.message || "Failed to upload image";
+      setProfileError(msg);
+      setNotification({ type: "error", text: msg });
+    } finally {
+      setProfileUploading(false);
+    }
+  };
+
+  const saveProfile = async (e) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileError("");
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(
+        `${API_BASE}/users/me/student`,
+        {
+          ...profileForm,
+          interests: profileForm.interests,
+          skills: profileForm.skills
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      if (res.data?.data) {
+        const updated = res.data.data;
+        setUserData((prev) => ({ ...(prev || {}), name: updated.name, email: updated.email }));
+      }
+
+      setNotification({ type: "success", text: "Profile updated successfully." });
+      setProfileModal(false);
+    } catch (error) {
+      const msg = error.response?.data?.message || "Failed to update profile";
+      setProfileError(msg);
+      setNotification({ type: "error", text: msg });
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
   const filteredAlumni = alumniList.filter((alumni) =>
     alumni.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     alumni.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -235,9 +374,29 @@ function Mentorship() {
 
           {/* User Profile Footer */}
           <div className="sidebar-footer">
-            <div className="user-profile">
+            <div
+              className="user-profile student-profile-click"
+              role="button"
+              tabIndex={0}
+              title="Edit Profile"
+              onClick={openProfileModal}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openProfileModal();
+                }
+              }}
+            >
               <div className="user-avatar">
-                {userData?.name?.charAt(0)?.toUpperCase() || user?.name?.charAt(0)?.toUpperCase() || "S"}
+                {userData?.profilePicture ? (
+                  <img
+                    src={userData.profilePicture.startsWith("http") ? userData.profilePicture : `${API_HOST}${userData.profilePicture}`}
+                    alt="Profile"
+                    className="user-avatar-img"
+                  />
+                ) : (
+                  userData?.name?.charAt(0)?.toUpperCase() || user?.name?.charAt(0)?.toUpperCase() || "S"
+                )}
               </div>
               <div className="user-info">
                 <p className="user-name">{userData?.name || user?.name || "Student"}</p>
@@ -303,6 +462,99 @@ function Mentorship() {
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {profileModal && (
+        <div className="sd-modal-backdrop" onClick={() => setProfileModal(false)}>
+          <div className="sd-modal sd-profile-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sd-modal-header">
+              <h3>👤 Edit Profile</h3>
+              <button className="sd-modal-close" onClick={() => setProfileModal(false)}>✕</button>
+            </div>
+
+            <div className="sd-modal-body">
+              {profileLoading && <p className="sd-modal-state">Loading your profile...</p>}
+
+              {!profileLoading && (
+                <>
+                  <div className="sd-profile-image-block">
+                    <div className="sd-profile-image-preview">
+                      {profileImagePreview ? (
+                        <img src={profileImagePreview} alt="Student profile preview" />
+                      ) : (
+                        <div className="sd-profile-image-fallback">{(profileForm.name || "S").charAt(0).toUpperCase()}</div>
+                      )}
+                    </div>
+                    <div className="sd-profile-image-actions">
+                      <input type="file" accept="image/*" onChange={handleProfileImageSelect} />
+                      <button className="sd-modal-btn" type="button" onClick={handleProfileImageUpload} disabled={profileUploading}>
+                        {profileUploading ? "Uploading..." : "Upload Image"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {profileError && <p className="sd-profile-error">{profileError}</p>}
+
+                  <form className="sd-profile-form" onSubmit={saveProfile}>
+                    <label htmlFor="mentor-profile-name">Name</label>
+                    <input
+                      id="mentor-profile-name"
+                      type="text"
+                      value={profileForm.name}
+                      onChange={(e) => updateProfileField("name", e.target.value)}
+                      required
+                    />
+
+                    <label htmlFor="mentor-profile-email">Email</label>
+                    <input
+                      id="mentor-profile-email"
+                      type="email"
+                      value={profileForm.email}
+                      onChange={(e) => updateProfileField("email", e.target.value)}
+                      required
+                    />
+
+                    <label htmlFor="mentor-profile-phone">Phone</label>
+                    <input
+                      id="mentor-profile-phone"
+                      type="text"
+                      value={profileForm.phone}
+                      onChange={(e) => updateProfileField("phone", e.target.value)}
+                      required
+                    />
+
+                    <label htmlFor="mentor-profile-interests">Interests (comma separated)</label>
+                    <textarea
+                      id="mentor-profile-interests"
+                      rows={2}
+                      value={profileForm.interests}
+                      onChange={(e) => updateProfileField("interests", e.target.value)}
+                      placeholder="AI, Backend, Product"
+                    />
+
+                    <label htmlFor="mentor-profile-skills">Skills (comma separated)</label>
+                    <textarea
+                      id="mentor-profile-skills"
+                      rows={2}
+                      value={profileForm.skills}
+                      onChange={(e) => updateProfileField("skills", e.target.value)}
+                      placeholder="React, Node.js, SQL"
+                    />
+
+                    <div className="sd-profile-actions">
+                      <button className="sd-profile-cancel" type="button" onClick={() => setProfileModal(false)}>
+                        Cancel
+                      </button>
+                      <button className="sd-modal-btn" type="submit" disabled={profileSaving}>
+                        {profileSaving ? "Saving..." : "Save Changes"}
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
             </div>
           </div>
         </div>

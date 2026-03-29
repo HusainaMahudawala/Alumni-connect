@@ -43,6 +43,7 @@ function AlumniDashboard() {
   const location = useLocation();
 
   const [summary, setSummary] = useState(null);
+  const [alumniProfile, setAlumniProfile] = useState(null);
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -77,10 +78,11 @@ function AlumniDashboard() {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
 
-        const [summaryRes, myOppRes, applicantsRes] = await Promise.all([
+        const [summaryRes, myOppRes, applicantsRes, alumniProfileRes] = await Promise.all([
           axios.get(`${API_BASE}/dashboard/alumni`, { headers }),
           axios.get(`${API_BASE}/opportunity/my`, { headers }),
-          axios.get(`${API_BASE}/opportunity/applicants`, { headers })
+          axios.get(`${API_BASE}/opportunity/applicants`, { headers }),
+          axios.get(`${API_BASE}/alumni/me`, { headers })
         ]);
 
         const applicantsMap = applicantsRes.data.reduce((acc, job) => {
@@ -104,6 +106,7 @@ function AlumniDashboard() {
             summaryRes.data?.postedOpportunities ?? mergedOpps.length,
           totalApplicants
         });
+        setAlumniProfile(alumniProfileRes.data?.data || null);
         setOpportunities(mergedOpps);
       } catch (err) {
         console.log(err);
@@ -196,8 +199,9 @@ function AlumniDashboard() {
     }
   };
 
-  const displayName = summary?.name || storedUser?.name || "Alumni";
-  const displayEmail = summary?.email || storedUser?.email || "alumni@portal.com";
+  const displayName = alumniProfile?.name || summary?.name || storedUser?.name || "Alumni";
+  const displayEmail = alumniProfile?.email || summary?.email || storedUser?.email || "alumni@portal.com";
+  const profilePicture = alumniProfile?.profilePicture || summary?.profilePicture || storedUser?.profilePicture;
 
   return (
     <div className="alumni-jobs-dashboard">
@@ -294,7 +298,17 @@ function AlumniDashboard() {
               }
             }}
           >
-            <div className="profile-avatar">{displayName.charAt(0).toUpperCase()}</div>
+            <div className="profile-avatar">
+              {profilePicture ? (
+                <img
+                  src={profilePicture.startsWith("http") ? profilePicture : `http://localhost:5000${profilePicture}`}
+                  alt="Profile"
+                  className="profile-avatar-img"
+                />
+              ) : (
+                displayName.charAt(0).toUpperCase()
+              )}
+            </div>
             <div>
               <p className="profile-name">{displayName}</p>
               <p className="profile-role">Alumni Member</p>
