@@ -470,7 +470,14 @@ function StudentDashboard() {
                   <span className="menu-icon">🤝</span>
                   <span>Mentorship</span>
                 </a>
-                <a href="#" className="menu-item">
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigation("/events");
+                  }}
+                  className={`menu-item ${location.pathname === "/events" ? "active" : ""}`}
+                >
                   <span className="menu-icon">📅</span>
                   <span>Events</span>
                 </a>

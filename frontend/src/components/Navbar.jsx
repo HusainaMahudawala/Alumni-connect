@@ -70,6 +70,12 @@ const Navbar = () => {
                   setShowApprovalModal(true);
                 }}
               />
+              <button
+                className="nav-link"
+                onClick={() => navigate("/events")}
+              >
+                Events
+              </button>
               {userRole === "alumni" ? (
                 <button
                   className="nav-link"

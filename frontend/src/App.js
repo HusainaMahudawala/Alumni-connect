@@ -22,6 +22,7 @@ import AlumniDirectory from "./pages/AlumniDirectory";
 import AlumniProfile from "./pages/AlumniProfile";
 import EditAlumniProfile from "./pages/EditAlumniProfile";
 import AlumniChat from "./pages/AlumniChat";
+import Events from "./pages/Events";
 
 function getRedirectPathForAuthenticatedUser() {
   const token = localStorage.getItem("token");
@@ -150,6 +151,14 @@ function App() {
           }
         />
         <Route path="/mentorship" element={<Mentorship />} />
+        <Route
+          path="/events"
+          element={
+            <ProtectedRoute>
+              <Events />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/alumni-dashboard"
           element={

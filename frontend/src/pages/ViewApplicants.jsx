@@ -97,9 +97,6 @@ function ViewApplicants() {
           </div>
         </div>
         <div className="topbar-actions">
-          <button className="topbar-notification" type="button" aria-label="Notifications">
-            🔔
-          </button>
         </div>
       </header>
 
@@ -140,7 +137,11 @@ function ViewApplicants() {
                 <span>🗣</span>
                 Community Feed
               </button>
-              <button type="button" className="sidebar-menu-item muted">
+              <button
+                type="button"
+                onClick={() => navigate("/events")}
+                className={`sidebar-menu-item ${location.pathname === "/events" ? "active" : ""}`}
+              >
                 <span>📅</span>
                 Events
               </button>

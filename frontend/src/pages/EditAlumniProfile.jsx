@@ -260,7 +260,11 @@ function EditAlumniProfile() {
                 <span>🗣</span>
                 Community Feed
               </button>
-              <button type="button" className="sidebar-menu-item muted">
+              <button
+                type="button"
+                onClick={() => navigate("/events")}
+                className={`sidebar-menu-item ${location.pathname === "/events" ? "active" : ""}`}
+              >
                 <span>📅</span>
                 Events
               </button>

@@ -34,6 +34,12 @@ function Mentorship() {
   const [profileImagePreview, setProfileImagePreview] = useState("");
   const [profileError, setProfileError] = useState("");
 
+  // Cancel mentorship modal
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [selectedMentorshipToCancel, setSelectedMentorshipToCancel] = useState(null);
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [cancelLoading, setCancelLoading] = useState(false);
+
   const user = JSON.parse(localStorage.getItem("user"));
 
   // clear notification after a few seconds
@@ -286,27 +292,7 @@ function Mentorship() {
           </div>
         </div>
 
-        {/* Center - Search Bar */}
-        <div className="navbar-center">
-          <div className="search-bar">
-          
-            <input
-              type="text"
-              placeholder="Search mentors by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            {searchTerm && (
-              <button
-                className="search-clear-btn"
-                onClick={() => setSearchTerm("")}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
+
 
         <div className="navbar-right">
           <span className="mentor-count-badge">{filteredAlumni.length} Mentors</span>
@@ -353,7 +339,14 @@ function Mentorship() {
                   <span className="menu-icon">🤝</span>
                   <span>Mentorship</span>
                 </a>
-                <a href="#" className="menu-item">
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigation("/events");
+                  }}
+                  className={`menu-item ${location.pathname === "/events" ? "active" : ""}`}
+                >
                   <span className="menu-icon">📅</span>
                   <span>Events</span>
                 </a>

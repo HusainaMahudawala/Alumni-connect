@@ -99,6 +99,7 @@ const NotificationBell = ({ onApproveClick }) => {
       job_applied: "💼",
       job_approved: "🎉",
       job_rejected: "⚠️",
+      job_deleted: "🗑️",
       connect_request: "🤝",
       collaboration_offer: "🎯",
       message_received: "💬"
@@ -142,6 +143,7 @@ const NotificationBell = ({ onApproveClick }) => {
       case "job_applied":
       case "job_approved":
       case "job_rejected":
+      case "job_deleted":
         // Navigate to my opportunities (job management page)
         navigate("/my-opportunities");
         break;

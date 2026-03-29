@@ -207,6 +207,16 @@ exports.notifyJobRejected = async (jobOwnerId, jobTitle, jobId) => {
   );
 };
 
+// Notify alumni when their opportunity is deleted by admin
+exports.notifyJobDeleted = async (jobOwnerId, jobTitle, jobId) => {
+  return exports.createNotificationHelper(
+    jobOwnerId,
+    "job_deleted",
+    `Your opportunity "${jobTitle}" has been deleted by admin`,
+    { jobId, jobTitle, actionUrl: "/my-opportunities" }
+  );
+};
+
 // Notify connection request
 exports.notifyConnectionRequest = async (userId, requesterId, requesterName) => {
   return exports.createNotificationHelper(

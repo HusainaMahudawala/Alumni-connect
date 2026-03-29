@@ -3,7 +3,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import CreatePost from "./CreatePost";
 import PostCard from "./PostCard";
-import NotificationBell from "./NotificationBell";
 import ApprovalModal from "./ApprovalModal";
 import "../styles/CommunityFeed.css";
 import "../pages/StudentDashboard.css";
@@ -562,21 +561,6 @@ const CommunityFeed = () => {
           </div>
 
           <div className="topbar-actions">
-            <div className="topbar-search">
-              <span className="topbar-search-icon">⌕</span>
-              <input
-                type="text"
-                placeholder="Quick search..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <NotificationBell
-              onApproveClick={(notificationItem) => {
-                setSelectedNotification(notificationItem);
-                setShowApprovalModal(true);
-              }}
-            />
           </div>
         </header>
       ) : (
@@ -591,17 +575,6 @@ const CommunityFeed = () => {
             </div>
           </div>
           <div className="navbar-right">
-            <div className="search-bar cf-top-search">
-              <input
-                type="text"
-                placeholder="Search posts, people, keywords..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <button className="notification-btn" type="button" aria-label="Notifications">
-              🔔
-            </button>
           </div>
         </nav>
       )}
@@ -644,7 +617,11 @@ const CommunityFeed = () => {
                   <span>🗣</span>
                   Community Feed
                 </button>
-                <button type="button" className="sidebar-menu-item muted">
+                <button
+                  type="button"
+                  onClick={() => navigate("/events")}
+                  className={`sidebar-menu-item ${location.pathname === "/events" ? "active" : ""}`}
+                >
                   <span>📅</span>
                   Events
                 </button>
@@ -733,7 +710,14 @@ const CommunityFeed = () => {
                     <span className="menu-icon">🤝</span>
                     <span>Mentorship</span>
                   </a>
-                  <a href="#" className="menu-item" onClick={(e) => e.preventDefault()}>
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleNavigation("/events");
+                    }}
+                    className={`menu-item ${location.pathname === "/events" ? "active" : ""}`}
+                  >
                     <span className="menu-icon">📅</span>
                     <span>Events</span>
                   </a>

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import NotificationBell from "../components/NotificationBell";
 import AlumniCard from "../components/AlumniCard";
 import "./AlumniDashboard.css";
 import "./AlumniDirectory.css";
@@ -249,18 +248,7 @@ function AlumniDirectory() {
           </div>
         </div>
 
-        <div className="topbar-actions">
-          <form className="topbar-search" onSubmit={applySearch}>
-            <span className="topbar-search-icon">⌕</span>
-            <input
-              type="text"
-              placeholder="Search alumni by name, company, skills..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-            />
-          </form>
-          <NotificationBell />
-        </div>
+
       </header>
 
       <div className="alumni-shell">
@@ -300,7 +288,11 @@ function AlumniDirectory() {
                 <span>🗣</span>
                 Community Feed
               </button>
-              <button type="button" className="sidebar-menu-item muted">
+              <button
+                type="button"
+                onClick={() => navigate("/events")}
+                className={`sidebar-menu-item ${location.pathname === "/events" ? "active" : ""}`}
+              >
                 <span>📅</span>
                 Events
               </button>

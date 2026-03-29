@@ -351,27 +351,7 @@ function StudentOpportunities() {
           </div>
         </div>
 
-        {/* Center - Search Bar */}
-        <div className="navbar-center">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Search roles, companies, or skills..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            {searchTerm && (
-              <button
-                className="search-clear-btn"
-                onClick={() => setSearchTerm("")}
-                aria-label="Clear search"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
+
 
         {/* Right - Filters */}
         <div className="navbar-right">
@@ -453,7 +433,14 @@ function StudentOpportunities() {
                   <span className="menu-icon">🤝</span>
                   <span>Mentorship</span>
                 </a>
-                <a href="#" className="menu-item">
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigation("/events");
+                  }}
+                  className={`menu-item ${location.pathname === "/events" ? "active" : ""}`}
+                >
                   <span className="menu-icon">📅</span>
                   <span>Events</span>
                 </a>

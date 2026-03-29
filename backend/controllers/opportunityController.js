@@ -172,10 +172,19 @@ exports.updateOpportunityStatusByAdmin = async (req, res) => {
 // Admin: delete opportunity
 exports.deleteOpportunityByAdmin = async (req, res) => {
   try {
-    const opportunity = await Opportunity.findById(req.params.id);
+    const opportunity = await Opportunity.findById(req.params.id).populate("postedBy", "_id name");
 
     if (!opportunity) {
       return res.status(404).json({ message: "Opportunity not found" });
+    }
+
+    // Send notification to alumni who posted this opportunity
+    if (opportunity.postedBy) {
+      await notificationController.notifyJobDeleted(
+        opportunity.postedBy._id,
+        opportunity.title,
+        opportunity._id
+      );
     }
 
     await opportunity.deleteOne();
