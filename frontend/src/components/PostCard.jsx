@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import ReactDOM from "react-dom";
 import axios from "axios";
 
@@ -14,7 +14,7 @@ const PostCard = ({ post, onLike, onComment, userId, onSavedPostsChange }) => {
   const [enlargedMedia, setEnlargedMedia] = useState(null);
   const [showOptions, setShowOptions] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [savedPosts, setSavedPosts] = useState(JSON.parse(localStorage.getItem('savedPosts') || '[]'));
+  const [savedPosts, setSavedPosts] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [updateLoading, setUpdateLoading] = useState(false);
@@ -38,11 +38,25 @@ const PostCard = ({ post, onLike, onComment, userId, onSavedPostsChange }) => {
   const commentInputRef = React.useRef(null);
   const [removeConfirmation, setRemoveConfirmation] = useState(null); // 'video' or 'file'
 
-  // Use userId from prop, fallback to localStorage
-  const currentUserId = userId || localStorage.getItem("userId");
+  // Use canonical user id from parent to avoid stale localStorage ownership mismatches.
+  const currentUserId = userId || null;
+  const savedPostsStorageKey = useMemo(
+    () => `savedPosts:${currentUserId || "anonymous"}`,
+    [currentUserId]
+  );
+
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem(savedPostsStorageKey) || "[]";
+      const parsed = JSON.parse(raw);
+      setSavedPosts(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setSavedPosts([]);
+    }
+  }, [savedPostsStorageKey]);
   
   if (!currentUserId) {
-    console.warn('⚠️  WARNING: No userId available at all! userId prop:', userId, 'localStorage:', localStorage.getItem("userId"));
+    console.warn('⚠️  WARNING: No userId available for PostCard ownership checks. userId prop:', userId);
   }
   
   const isLiked = post.likedBy?.some(id => id.toString() === currentUserId);
@@ -271,7 +285,7 @@ const PostCard = ({ post, onLike, onComment, userId, onSavedPostsChange }) => {
         updated.push(post._id);
       }
       setSavedPosts(updated);
-      localStorage.setItem('savedPosts', JSON.stringify(updated));
+      localStorage.setItem(savedPostsStorageKey, JSON.stringify(updated));
       if (typeof onSavedPostsChange === 'function') {
         onSavedPostsChange(updated);
       }

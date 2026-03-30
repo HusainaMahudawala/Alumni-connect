@@ -23,6 +23,9 @@ function Login() {
     const role = res.data.user.role; // get role from backend
     localStorage.setItem("role", role);
     localStorage.setItem("user", JSON.stringify(res.data.user));
+    if (res.data.user?.id || res.data.user?._id) {
+      localStorage.setItem("userId", res.data.user.id || res.data.user._id);
+    }
 
     if (role === "alumni") {
       navigate("/alumni-dashboard", { replace: true });

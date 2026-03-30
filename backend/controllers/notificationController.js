@@ -37,6 +37,13 @@ exports.getNotifications = async (req, res) => {
 // Create notification (called from other controllers)
 exports.createNotification = async (req, res) => {
   try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to create notifications"
+      });
+    }
+
     const { userId, type, message, data } = req.body;
 
     if (!userId || !type || !message) {
@@ -70,8 +77,12 @@ exports.markAsRead = async (req, res) => {
   try {
     const { notificationId } = req.body;
 
-    const notification = await Notification.findByIdAndUpdate(
-      notificationId,
+    if (!notificationId) {
+      return res.status(400).json({ success: false, message: "notificationId is required" });
+    }
+
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, userId: req.user.id },
       { isRead: true },
       { new: true }
     );

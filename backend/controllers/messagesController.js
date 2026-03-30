@@ -115,23 +115,61 @@ exports.getUnreadCount = async (req, res) => {
   }
 };
 
+// Search users to start a chat conversation
+exports.searchUsers = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const q = String(req.query.q || "").trim();
+
+    if (!q) {
+      return res.json([]);
+    }
+
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(escaped, "i");
+
+    const users = await User.find({
+      _id: { $ne: userId },
+      $or: [{ name: regex }, { email: regex }],
+    })
+      .select("name email role")
+      .sort({ name: 1 })
+      .limit(20);
+
+    res.json(
+      users.map((u) => ({
+        userId: String(u._id),
+        name: u.name || "User",
+        email: u.email || "",
+        role: u.role || "",
+      }))
+    );
+  } catch (err) {
+    console.error("Error searching chat users:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // Mark message as read
 exports.markAsRead = async (req, res) => {
   try {
     const { messageId } = req.params;
+    const userId = req.user.id;
 
-    const message = await Message.findByIdAndUpdate(
-      messageId,
-      { 
-        isRead: true,
-        readAt: new Date(),
-      },
-      { new: true }
-    );
+    const message = await Message.findById(messageId);
 
     if (!message) {
       return res.status(404).json({ message: "Message not found" });
     }
+
+    // Only the intended recipient can mark a message as read.
+    if (message.recipientId.toString() !== userId) {
+      return res.status(403).json({ message: "Not authorized to update this message" });
+    }
+
+    message.isRead = true;
+    message.readAt = new Date();
+    await message.save();
 
     res.json({ message: "Message marked as read", data: message });
   } catch (err) {

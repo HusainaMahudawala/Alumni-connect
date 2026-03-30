@@ -12,6 +12,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 const API_BASE = "http://localhost:5000/api";
 const API_HOST = "http://localhost:5000";
 
+const buildScopedStorageKey = (prefix, userId) => `${prefix}:${userId || "anonymous"}`;
+const resolveId = (value) => value?._id || value?.id || value?.userId || null;
+
 const CommunityFeed = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,15 +51,7 @@ const CommunityFeed = () => {
   const [profileImageFile, setProfileImageFile] = useState(null);
   const [profileImagePreview, setProfileImagePreview] = useState("");
   const [profileError, setProfileError] = useState("");
-  const [savedPostIds, setSavedPostIds] = useState(() => {
-    try {
-      const raw = localStorage.getItem("savedPosts") || "[]";
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+  const [savedPostIds, setSavedPostIds] = useState([]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -69,22 +64,46 @@ const CommunityFeed = () => {
       return null;
     }
   }, []);
+  const currentUserId = resolveId(userData) || resolveId(storedUser) || localStorage.getItem("userId");
+  const savedPostsStorageKey = useMemo(
+    () => buildScopedStorageKey("savedPosts", currentUserId),
+    [currentUserId]
+  );
+  const joinedUsersStorageKey = useMemo(
+    () => buildScopedStorageKey("joinedUsers", currentUserId),
+    [currentUserId]
+  );
 
   useEffect(() => {
     fetchPosts();
     fetchUserData();
     fetchRecommendedUsers();
-    
-    // Load joined users from localStorage
-    const savedJoinedUsers = localStorage.getItem("joinedUsers");
-    if (savedJoinedUsers) {
-      try {
-        setJoinedUsers(new Set(JSON.parse(savedJoinedUsers)));
-      } catch (err) {
-        console.error("Failed to load joined users:", err);
-      }
-    }
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(savedPostsStorageKey) || "[]";
+      const parsed = JSON.parse(raw);
+      setSavedPostIds(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setSavedPostIds([]);
+    }
+  }, [savedPostsStorageKey]);
+
+  useEffect(() => {
+    const savedJoinedUsers = localStorage.getItem(joinedUsersStorageKey);
+    if (!savedJoinedUsers) {
+      setJoinedUsers(new Set());
+      return;
+    }
+
+    try {
+      setJoinedUsers(new Set(JSON.parse(savedJoinedUsers)));
+    } catch (err) {
+      console.error("Failed to load joined users:", err);
+      setJoinedUsers(new Set());
+    }
+  }, [joinedUsersStorageKey]);
 
   useEffect(() => {
     const pending = localStorage.getItem("pendingChatRecipient");
@@ -105,9 +124,10 @@ const CommunityFeed = () => {
 
   // Ensure userId is in localStorage whenever userData changes
   useEffect(() => {
-    if (userData?._id) {
-      localStorage.setItem("userId", userData._id);
-      console.log('✅ userData updated, userId in localStorage:', userData._id);
+    const resolvedUserId = resolveId(userData);
+    if (resolvedUserId) {
+      localStorage.setItem("userId", resolvedUserId);
+      console.log('✅ userData updated, userId in localStorage:', resolvedUserId);
     }
   }, [userData]);
 
@@ -165,9 +185,10 @@ const CommunityFeed = () => {
       console.log("✅ fetchUserData response:", normalizedData);
       setUserData(normalizedData);
 
-      if (normalizedData?._id) {
-        localStorage.setItem("userId", normalizedData._id);
-        console.log("✅ userId saved to localStorage:", normalizedData._id);
+      const normalizedUserId = resolveId(normalizedData);
+      if (normalizedUserId) {
+        localStorage.setItem("userId", normalizedUserId);
+        console.log("✅ userId saved to localStorage:", normalizedUserId);
       }
     } catch (error) {
       console.error('❌ fetchUserData error:', error.response?.data || error.message);
@@ -248,7 +269,7 @@ const CommunityFeed = () => {
       }
       
       setJoinedUsers(newJoinedUsers);
-      localStorage.setItem("joinedUsers", JSON.stringify([...newJoinedUsers]));
+      localStorage.setItem(joinedUsersStorageKey, JSON.stringify([...newJoinedUsers]));
       
       // Clear notification after 5 seconds
       setTimeout(() => setNotification(null), 5000);
@@ -355,10 +376,9 @@ const CommunityFeed = () => {
   const handleSavedPostsChange = (nextSavedPostIds) => {
     if (!Array.isArray(nextSavedPostIds)) return;
     setSavedPostIds(nextSavedPostIds);
+    localStorage.setItem(savedPostsStorageKey, JSON.stringify(nextSavedPostIds));
   };
 
-  // Get current user ID from either userData or localStorage
-  const currentUserId = userData?._id || localStorage.getItem("userId");
   const userRole = localStorage.getItem("role");
   const isAlumni = userRole === "alumni";
   const dashboardPath = isAlumni ? "/alumni-dashboard" : "/student";
@@ -370,6 +390,7 @@ const CommunityFeed = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("user");
+    localStorage.removeItem("userId");
     navigate("/");
   };
 
@@ -509,8 +530,10 @@ const CommunityFeed = () => {
     } else if (activeTab === "trending") {
       copy.sort((a, b) => safeComments(b) - safeComments(a));
     } else if (activeTab === "following") {
-      const currentName = userData?.name;
-      return copy.filter((p) => currentName && p.authorName === currentName);
+      return copy.filter((p) => {
+        const authorId = p?.authorId?.toString?.() || p?.authorId;
+        return Boolean(currentUserId && authorId && authorId === currentUserId);
+      });
     } else {
       // "All" – newest first
       copy.sort(
@@ -520,7 +543,7 @@ const CommunityFeed = () => {
       );
     }
     return copy;
-  }, [posts, activeTab, userData?.name]);
+  }, [posts, activeTab, currentUserId]);
 
   const filteredPosts = useMemo(() => {
     const base = sortedPosts;

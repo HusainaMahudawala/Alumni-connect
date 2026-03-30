@@ -9,6 +9,8 @@ const FloatingChatModal = () => {
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [searchUsers, setSearchUsers] = useState([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0); // Total unread count
   const [showMessageInfo, setShowMessageInfo] = useState(null); // Message ID to show info for on hover
@@ -59,6 +61,26 @@ const FloatingChatModal = () => {
   console.log("📱 Final userId for this session:", userId);
   
   const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+  // Keep icon unread count fresh even when chat modal is closed.
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await axios.get(`${apiUrl}/api/messages/unread`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUnreadCount(Number(response.data?.unreadCount || 0));
+      } catch (error) {
+        console.error("Error fetching unread message count:", error);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 5000);
+    return () => clearInterval(interval);
+  }, [token, apiUrl]);
 
   // Fetch conversations
   useEffect(() => {
@@ -229,7 +251,7 @@ const FloatingChatModal = () => {
 
   // Fetch messages for selected conversation
   useEffect(() => {
-    if (!selectedConversation || !token) return;
+    if (!showChat || !selectedConversation || !token) return;
 
     const fetchMessages = async () => {
       try {
@@ -303,7 +325,7 @@ const FloatingChatModal = () => {
       clearInterval(interval);
       window.removeEventListener("notification-marked-read", handleNotificationRead);
     };
-  }, [selectedConversation, token, apiUrl, userId]);
+  }, [showChat, selectedConversation, token, apiUrl, userId]);
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -437,9 +459,61 @@ const FloatingChatModal = () => {
     setSelectedConversation(conversation);
   };
 
+  const resetChatSearch = () => {
+    setSearchText("");
+    setSearchUsers([]);
+    setSearchingUsers(false);
+  };
+
   const filteredConversations = conversations.filter((conv) =>
     conv.name.toLowerCase().includes(searchText.toLowerCase())
   );
+
+  // Search any existing users so a new conversation can be started from chat icon.
+  useEffect(() => {
+    if (!showChat || !token) return;
+
+    const q = searchText.trim();
+    if (q.length < 2) {
+      setSearchUsers([]);
+      return;
+    }
+
+    const existingConversationIds = new Set(conversations.map((c) => String(c.userId)));
+    const timeoutId = setTimeout(async () => {
+      try {
+        setSearchingUsers(true);
+        const response = await axios.get(`${apiUrl}/api/messages/users/search`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { q },
+        });
+
+        const candidates = Array.isArray(response.data) ? response.data : [];
+        const newUsersOnly = candidates.filter(
+          (u) => !existingConversationIds.has(String(u.userId))
+        );
+        setSearchUsers(newUsersOnly);
+      } catch (error) {
+        console.error("Error searching users for chat:", error);
+        setSearchUsers([]);
+      } finally {
+        setSearchingUsers(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timeoutId);
+  }, [showChat, token, apiUrl, searchText, conversations]);
+
+  const handleStartNewConversation = (user) => {
+    setSelectedConversation({
+      userId: String(user.userId),
+      name: user.name || "Unknown User",
+      lastMessage: "",
+      timestamp: new Date().toISOString(),
+      unreadCount: 0,
+    });
+    setMessages([]);
+  };
 
   const handleToggleChat = (e) => {
     if (isDragging) return; // Don't toggle if dragging
@@ -485,7 +559,17 @@ const FloatingChatModal = () => {
                 <h3>💬 Messages</h3>
                 <button
                   className="close-chat-btn"
-                  onClick={() => setShowChat(false)}
+                  onClick={() => {
+                    const hasActiveSearch = searchText.trim().length > 0 || searchUsers.length > 0;
+                    if (hasActiveSearch) {
+                      resetChatSearch();
+                      setSelectedConversation(null);
+                      setMessages([]);
+                      return;
+                    }
+
+                    setShowChat(false);
+                  }}
                   title="Close Messages"
                 >
                   ✕
@@ -498,8 +582,14 @@ const FloatingChatModal = () => {
                   placeholder="Search..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                    }
+                  }}
                   className="search-input"
                 />
+                <p className="search-hint">Press Enter to search users</p>
               </div>
 
               <div className="conversations-list">
@@ -539,6 +629,36 @@ const FloatingChatModal = () => {
                     </div>
                   ))
                 )}
+
+                {searchText.trim().length >= 2 && (
+                  <>
+                    <div className="search-section-title">Users</div>
+                    {searchingUsers ? (
+                      <div className="loading-state">Searching users...</div>
+                    ) : searchUsers.length === 0 ? (
+                      <div className="empty-state compact-empty">
+                        <p>No additional users found</p>
+                      </div>
+                    ) : (
+                      searchUsers.map((u) => (
+                        <div
+                          key={`search-${u.userId}`}
+                          className="conversation-item search-user-item"
+                          onClick={() => handleStartNewConversation(u)}
+                        >
+                          <div className="conv-avatar">{(u.name || "U").charAt(0).toUpperCase()}</div>
+                          <div className="conv-content">
+                            <div className="conv-name">{u.name || "User"}</div>
+                            <div className="conv-preview">
+                              {u.email || "Tap to start chat"}
+                              {u.role ? ` • ${String(u.role).charAt(0).toUpperCase()}${String(u.role).slice(1)}` : ""}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </>
+                )}
               </div>
             </div>
 
@@ -562,6 +682,7 @@ const FloatingChatModal = () => {
                     <button
                       className="close-chat-btn"
                       onClick={() => {
+                        resetChatSearch();
                         setSelectedConversation(null);
                         setMessages([]);
                       }}

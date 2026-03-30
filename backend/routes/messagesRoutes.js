@@ -5,6 +5,7 @@ const {
   sendMessage,
   getMessages,
   getUnreadCount,
+  searchUsers,
   markAsRead,
   deleteMessage,
 } = require("../controllers/messagesController");
@@ -17,6 +18,9 @@ router.get("/", auth, getMessages);
 
 // Get unread messages count
 router.get("/unread", auth, getUnreadCount);
+
+// Search users for chat
+router.get("/users/search", auth, searchUsers);
 
 // Mark message as read
 router.put("/:messageId/read", auth, markAsRead);
