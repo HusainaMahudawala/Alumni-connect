@@ -50,7 +50,13 @@ exports.register = async (req, res) => {
     } else if (role === "alumni") {
       userData.company = company;
       userData.experience = parseInt(experience) || 0;
-      userData.mentorshipSlots = parseInt(mentorshipSlots) || 0;
+
+      const parsedMentorshipSlots = Number.parseInt(mentorshipSlots, 10);
+      if (!Number.isInteger(parsedMentorshipSlots) || parsedMentorshipSlots < 1) {
+        return res.status(400).json({ message: "Mentorship slots must be at least 1 for alumni" });
+      }
+
+      userData.mentorshipSlots = parsedMentorshipSlots;
     }
 
     const user = new User(userData);

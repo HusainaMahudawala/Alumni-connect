@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
+const { startMentorshipSlotsScheduler } = require("./scripts/mentorshipSlotsScheduler");
 require("dotenv").config();
 
 const app = express();
@@ -24,7 +25,10 @@ app.use("/api/messages", require("./routes/messagesRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/events", require("./routes/eventRoutes"));
 mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log("MongoDB Connected"))
+.then(() => {
+  console.log("MongoDB Connected");
+  startMentorshipSlotsScheduler();
+})
 .catch(err => console.log(err));
 
 

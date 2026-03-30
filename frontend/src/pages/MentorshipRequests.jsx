@@ -14,6 +14,9 @@ function MentorshipRequests() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [alumniProfile, setAlumniProfile] = useState(null);
+  const [slotInput, setSlotInput] = useState("");
+  const [currentSlots, setCurrentSlots] = useState(0);
+  const [savingSlots, setSavingSlots] = useState(false);
   const token = localStorage.getItem("token");
 
   const storedUser = useMemo(() => {
@@ -41,6 +44,7 @@ function MentorshipRequests() {
 
   useEffect(() => {
     fetchRequests();
+    fetchMyMentorshipSlots();
   }, []);
 
   const fetchRequests = async () => {
@@ -60,6 +64,80 @@ function MentorshipRequests() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchMyMentorshipSlots = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/mentorship/slots/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const slots = Number.parseInt(response.data?.mentorshipSlots, 10);
+      const safeSlots = Number.isInteger(slots) && slots >= 0 ? slots : 0;
+      setCurrentSlots(safeSlots);
+    } catch (error) {
+      console.error("Error fetching mentorship slots:", error);
+    }
+  };
+
+  const handleUpdateSlots = async (e) => {
+    e.preventDefault();
+
+    const parsedSlots = Number.parseInt(slotInput, 10);
+    if (!Number.isInteger(parsedSlots) || parsedSlots < 1) {
+      setNotification({ type: "error", text: "Slots must be at least 1" });
+      return;
+    }
+
+    try {
+      setSavingSlots(true);
+
+      const response = await axios.put(
+        "http://localhost:5000/api/mentorship/slots/me",
+        { mentorshipSlots: parsedSlots },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      const savedSlots = Number.parseInt(response.data?.mentorshipSlots, 10);
+      const safeSlots = Number.isInteger(savedSlots) && savedSlots >= 1 ? savedSlots : parsedSlots;
+
+      setCurrentSlots(safeSlots);
+      setSlotInput("");
+      setNotification({ type: "success", text: "Mentorship slots updated successfully" });
+    } catch (error) {
+      console.error("Error updating mentorship slots:", error);
+      setNotification({
+        type: "error",
+        text: error.response?.data?.message || "Failed to update mentorship slots"
+      });
+    } finally {
+      setSavingSlots(false);
+    }
+  };
+
+  const handleSlotInputChange = (e) => {
+    const rawValue = e.target.value;
+
+    if (rawValue === "") {
+      setSlotInput("");
+      return;
+    }
+
+    const parsedSlots = Number.parseInt(rawValue, 10);
+    if (!Number.isInteger(parsedSlots)) {
+      return;
+    }
+
+    if (parsedSlots < 1) {
+      setSlotInput("1");
+      // Use success toast (green) as requested.
+      setNotification({ type: "success", text: "Slots cannot be 0" });
+      return;
+    }
+
+    setSlotInput(String(parsedSlots));
   };
 
   const handleApprove = async (id) => {
@@ -88,6 +166,7 @@ function MentorshipRequests() {
 
       setNotification({ type: "success", text: "Mentorship request rejected" });
       fetchRequests();
+      fetchMyMentorshipSlots();
     } catch (error) {
       console.error("Error rejecting request:", error);
       setNotification({ type: "error", text: "Failed to reject request" });
@@ -216,7 +295,27 @@ function MentorshipRequests() {
         <main className="mr-main">
           <div className="mr-container">
             <div className="mr-header">
-              <h1>Mentorship Requests</h1>
+              <div className="mr-header-top">
+                <h1>Mentorship Requests</h1>
+
+                <form className="slot-mini" onSubmit={handleUpdateSlots}>
+                  <span className="slot-mini-label">Slots</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={slotInput}
+                    onChange={handleSlotInputChange}
+                    aria-label="Mentorship slots"
+                    required
+                  />
+                  <button type="submit" className="slot-mini-btn" disabled={savingSlots}>
+                    {savingSlots ? "Saving..." : "Update"}
+                  </button>
+                  <span className="slot-mini-current">Now: {currentSlots}</span>
+                </form>
+              </div>
+
               <p>Review and manage student mentorship applications</p>
             </div>
 
@@ -356,6 +455,7 @@ function MentorshipRequests() {
             setSelectedRequest(null);
             setNotification({ type: "success", text: "Mentorship request approved!" });
             fetchRequests();
+            fetchMyMentorshipSlots();
           }}
           onNotificationResolved={() => {
             // Notification deleted

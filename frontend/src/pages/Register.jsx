@@ -53,6 +53,11 @@ function Register() {
         setError("Please enter valid years of experience");
         return;
       }
+      const parsedMentorshipSlots = Number.parseInt(mentorshipSlots, 10);
+      if (!Number.isInteger(parsedMentorshipSlots) || parsedMentorshipSlots < 1) {
+        setError("Mentorship slots must be at least 1");
+        return;
+      }
     }
 
     setLoading(true);
@@ -72,7 +77,7 @@ function Register() {
       } else if (role === "alumni") {
         userData.company = company.trim();
         userData.experience = parseInt(experience) || 0;
-        userData.mentorshipSlots = parseInt(mentorshipSlots) || 0;
+        userData.mentorshipSlots = Number.parseInt(mentorshipSlots, 10);
       }
 
       const response = await axios.post(
@@ -283,7 +288,7 @@ function Register() {
                       value={mentorshipSlots}
                       onChange={(e) => setMentorshipSlots(e.target.value)}
                       required
-                      min="0"
+                      min="1"
                     />
                   </div>
                 </>

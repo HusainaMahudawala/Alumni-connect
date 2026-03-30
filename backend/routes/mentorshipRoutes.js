@@ -3,15 +3,14 @@ const router = express.Router();
 
 const auth = require("../middleware/authMiddleware");
 const role = require("../middleware/roleMiddleware");
-const Mentorship = require("../models/Mentorship");
-const User = require("../models/User");
-const verifyToken = require("../middleware/authMiddleware");
 const {
   applyMentorship,
   viewRequests,
   updateStatus,
   myMentorships,
   approvedMentorships,
+  getMyMentorshipSlots,
+  updateMyMentorshipSlots,
   adminAllMentorshipRequests
 } = require("../controllers/mentorshipController");
 // Student sends mentorship request
@@ -19,32 +18,15 @@ router.post(
   "/request",
   auth,
   role(["student"]),
-  async (req, res) => {
-    try {
-      const { alumniId, purpose } = req.body;
+  (req, res, next) => {
+    const { alumniId } = req.body || {};
 
-      const alumni = await User.findById(alumniId).select("role mentorshipSlots");
-      if (!alumni || alumni.role !== "alumni") {
-        return res.status(404).json({ message: "Alumni not found" });
-      }
-
-      if ((alumni.mentorshipSlots || 0) <= 0) {
-        return res.status(400).json({
-          message: "You cannot request mentorship. Slot is not available."
-        });
-      }
-
-      const request = new Mentorship({
-        student: req.user.id,
-        alumni: alumniId,
-        purpose
-      });
-
-      await request.save();
-      res.status(201).json({ message: "Mentorship request sent" });
-    } catch (err) {
-      res.status(500).json({ message: err.message });
+    if (!alumniId) {
+      return res.status(400).json({ message: "alumniId is required" });
     }
+
+    req.params.alumniId = alumniId;
+    return applyMentorship(req, res, next);
   }
 );
 
@@ -73,6 +55,8 @@ router.get(
   role("alumni"),
   approvedMentorships
 );
+router.get("/slots/me", auth, role("alumni"), getMyMentorshipSlots);
+router.put("/slots/me", auth, role("alumni"), updateMyMentorshipSlots);
 
 // Admin
 router.get("/admin/all", auth, role("admin"), adminAllMentorshipRequests);

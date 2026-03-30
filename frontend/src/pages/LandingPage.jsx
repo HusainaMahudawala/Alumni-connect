@@ -95,7 +95,7 @@ const LandingPage = () => {
           </p>
           <div className="hero-buttons">
             <button
-              className="btn btn-primary"
+              className="btn btn-secondary"
               onClick={() => navigate("/register")}
             >
               Get Started

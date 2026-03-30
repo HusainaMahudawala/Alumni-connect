@@ -21,7 +21,8 @@ const notificationSchema = new mongoose.Schema(
         "connect_request",
         "collaboration_offer",
         "message_received",
-        "event_unregistered"
+        "event_unregistered",
+        "mentorship_slots_update"
       ],
       required: true
     },
@@ -41,7 +42,9 @@ const notificationSchema = new mongoose.Schema(
       isAction: Boolean,
       meetingLink: String,
       meetingDate: Date,
-      meetingLocation: String
+      meetingLocation: String,
+      monthlyKey: String,
+      slotsValue: Number
     },
 
     isRead: {

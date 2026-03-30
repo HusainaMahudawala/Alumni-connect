@@ -180,6 +180,53 @@ exports.approvedMentorships = async (req, res) => {
   }
 };
 
+// Alumni gets current mentorship slots
+exports.getMyMentorshipSlots = async (req, res) => {
+  try {
+    const alumni = await User.findOne({ _id: req.user.id, role: "alumni" }).select("mentorshipSlots");
+
+    if (!alumni) {
+      return res.status(404).json({ message: "Alumni not found" });
+    }
+
+    const slots = Number.isInteger(alumni.mentorshipSlots)
+      ? alumni.mentorshipSlots
+      : Number.parseInt(alumni.mentorshipSlots, 10) || 0;
+
+    res.json({ mentorshipSlots: Math.max(0, slots) });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Alumni updates current mentorship slots (must be >= 1)
+exports.updateMyMentorshipSlots = async (req, res) => {
+  try {
+    const parsedSlots = Number.parseInt(req.body?.mentorshipSlots, 10);
+
+    if (!Number.isInteger(parsedSlots) || parsedSlots < 1) {
+      return res.status(400).json({ message: "Mentorship slots must be at least 1" });
+    }
+
+    const alumni = await User.findOneAndUpdate(
+      { _id: req.user.id, role: "alumni" },
+      { $set: { mentorshipSlots: parsedSlots } },
+      { new: true, runValidators: true }
+    ).select("mentorshipSlots");
+
+    if (!alumni) {
+      return res.status(404).json({ message: "Alumni not found" });
+    }
+
+    res.json({
+      message: "Mentorship slots updated successfully",
+      mentorshipSlots: alumni.mentorshipSlots
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Admin views all mentorship requests
 exports.adminAllMentorshipRequests = async (req, res) => {
   try {

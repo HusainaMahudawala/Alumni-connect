@@ -175,6 +175,7 @@ const notificationAPI = {
       mentorship_request: "🤝",
       mentorship_approved: "✅",
       mentorship_rejected: "❌",
+      mentorship_slots_update: "🗓️",
       job_applied: "💼",
     };
     return iconMap[type] || "📬";
@@ -188,6 +189,7 @@ const notificationAPI = {
       mentorship_request: "Mentorship Request",
       mentorship_approved: "Mentorship Approved",
       mentorship_rejected: "Mentorship Rejected",
+      mentorship_slots_update: "Update Mentorship Slots",
       job_applied: "Job Application",
     };
     return titleMap[type] || "Notification";

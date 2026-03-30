@@ -11,7 +11,7 @@ exports.getNotifications = async (req, res) => {
 
     const [notifications, totalCount, unreadCount] = await Promise.all([
       Notification.find(baseQuery)
-        .sort({ createdAt: -1 })
+        .sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(limit),
       Notification.countDocuments(baseQuery),

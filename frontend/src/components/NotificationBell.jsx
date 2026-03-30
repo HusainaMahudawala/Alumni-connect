@@ -15,6 +15,7 @@ const NotificationBell = ({ onApproveClick }) => {
   const [loadingAll, setLoadingAll] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState(false);
   const [notificationToDelete, setNotificationToDelete] = useState(null);
   const [deletingNotification, setDeletingNotification] = useState(false);
   const panelRef = useRef(null);
@@ -33,8 +34,15 @@ const NotificationBell = ({ onApproveClick }) => {
         const response = await fetch(`${apiUrl}/api/notifications?page=1&limit=3`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+
+        if (response.status === 401) {
+          setAuthError(true);
+          return;
+        }
+
         const data = await response.json();
         if (data.success) {
+          setAuthError(false);
           const notifs = (data.notifications || []).slice(0, 3);
           setNotifications(notifs);
           setUnreadCount(data.unreadCount || 0);
@@ -58,8 +66,15 @@ const NotificationBell = ({ onApproveClick }) => {
       const response = await fetch(`${apiUrl}/api/notifications?page=${page}&limit=25`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      if (response.status === 401) {
+        setAuthError(true);
+        return;
+      }
+
       const data = await response.json();
       if (data.success) {
+        setAuthError(false);
         const next = data.notifications || [];
         setAllNotifications(next);
         setAllCurrentPage(page);
@@ -179,6 +194,7 @@ const NotificationBell = ({ onApproveClick }) => {
       mentorship_request: "📚",
       mentorship_approved: "✅",
       mentorship_rejected: "❌",
+      mentorship_slots_update: "🗓️",
       job_applied: "💼",
       job_approved: "🎉",
       job_rejected: "⚠️",
@@ -221,6 +237,11 @@ const NotificationBell = ({ onApproveClick }) => {
       case "mentorship_rejected":
         // Navigate to mentorship page
         navigate("/mentorship");
+        break;
+
+      case "mentorship_slots_update":
+        // Alumni updates monthly mentorship slots here.
+        navigate("/mentorship-requests");
         break;
 
       case "job_applied":
@@ -313,6 +334,11 @@ const NotificationBell = ({ onApproveClick }) => {
               <div className="empty-state">
                 <span>⏳ Loading...</span>
               </div>
+            ) : authError ? (
+              <div className="empty-state">
+                <span>⏱️ Session time mismatch</span>
+                <p>Your device date/time changed. Please log in again to view notifications.</p>
+              </div>
             ) : notifications.length === 0 ? (
               <div className="empty-state">
                 <span>✨ All caught up!</span>
@@ -383,6 +409,11 @@ const NotificationBell = ({ onApproveClick }) => {
             <div className="notification-modal-list">
               {loadingAll && allNotifications.length === 0 ? (
                 <div className="empty-state"><span>⏳ Loading...</span></div>
+              ) : authError ? (
+                <div className="empty-state">
+                  <span>⏱️ Session time mismatch</span>
+                  <p>Your device date/time changed. Please log in again.</p>
+                </div>
               ) : allNotifications.length === 0 ? (
                 <div className="empty-state">
                   <span>🔔</span>

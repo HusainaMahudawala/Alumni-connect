@@ -231,6 +231,14 @@
   background: linear-gradient(90deg, #ef444405 0%, transparent 100%);
 }
 
+.notification-item[data-type="mentorship_slots_update"] {
+  border-left-color: #6366f1;
+}
+
+.notification-item[data-type="mentorship_slots_update"]:hover {
+  background: linear-gradient(90deg, #6366f105 0%, transparent 100%);
+}
+
 .notification-item[data-type="job_applied"] {
   border-left-color: #f59e0b;
 }

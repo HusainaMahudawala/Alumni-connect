@@ -41,7 +41,8 @@ const userSchema = new mongoose.Schema(
     // Mentorship control
     mentorshipSlots: {
       type: Number,
-      default: 0
+      min: 1,
+      default: 1
     }
   },
   { timestamps: true }

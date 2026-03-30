@@ -177,11 +177,19 @@ body {
 
 .hero-illustration {
   position: relative;
-  width: 350px;
-  height: 350px;
+  width: min(580px, 100%);
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.hero-main-image {
+  width: 100%;
+  max-width: 580px;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
 }
 
 .circle {
